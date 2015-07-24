@@ -1,0 +1,72 @@
+ja:
+  code:
+    country:
+      japan: '日本'
+      united_states: 'アメリカ'
+      china: '中国'
+
+    industry:
+      forestry_fishery: '水産・農林業'
+      mining: '鉱業'
+      building: '建設業'
+      food: '食料品'
+      fiber: '繊維製品'
+      paper_pulp: 'パルプ・紙'
+      chemical: '化学'
+      medicine: '医薬品'
+      petroleum_coal: '石油・石炭'
+      rubber: 'ゴム製品'
+      glass_stone: 'ガラス・土石'
+      iron: '鉄鋼'
+      metal_exiron: '非鉄金属'
+      metal: '金属製品'
+      machinery: '機械'
+      electrical: '電気機器'
+      transport_machinery: '輸送用機器'
+      precision_machinery: '精密機器'
+      misc_machinery: 'その他製品'
+      electricity_gas: '電気・ガス'
+      land_transport: '陸運業'
+      shipping: '海運業'
+      sky_transport: '空運業'
+      warehouse_conveyance: '倉庫・運輸'
+      communication: '情報・通信業'
+      wholesale: '卸売業'
+      retail: '小売業'
+      bank: '銀行業'
+      bill_broker: '証券・商品'
+      insurer: '保険業'
+      financial: 'その他金融業'
+      estate: '不動産業'
+      service: 'サービス業'
+
+    market:
+      t_1: '東証1部'
+      t_2: '東証2部'
+      t_js: '東証JASDAQ・S'
+      t_jg: '東証JASDAQ・G'
+      t_m: '東証マザーズ'
+      t_f: '東証外国'
+      s: '札証'
+      s_a: '札証アンビシャス'
+      m_1: '名証1部'
+      m_2: '名証2部'
+      m_c: '名証セントレックス'
+      f: '福証'
+      f_q: '福証Q-Board'
+
+    foreign_exchange:
+      usdjpy: 'ドル/円'
+      eurjpy: 'ユーロ/円'
+
+
+
+
+
+
+
+
+
+
+
+

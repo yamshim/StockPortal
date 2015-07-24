@@ -1,0 +1,1 @@
+CODE = YAML.load_file("#{Rails.root}/config/codes.yml")
