@@ -53,9 +53,34 @@ market:
   f: 11
   f_q: 12
 
-foreign_exchange:
+currency:
   usdjpy: 0
   eurjpy: 1
+
+bracket:
+  nikkei225: 0
+  topix: 1
+  jasdaq: 2
+  dji: 3
+  nasdaq: 4
+  sse: 5
+  hsi: 6
+
+trend_source:
+  nikkei: 0
+
+tag_type:
+  category: 0
+  trend: 1
+  alias: 2
+  ignore: 3
+
+commodity:
+  gold: 0
+  us_wheat: 1
+  crude_oil: 2
+
+
 
 
 

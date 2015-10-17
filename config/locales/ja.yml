@@ -14,9 +14,9 @@ ja:
       paper_pulp: 'パルプ・紙'
       chemical: '化学'
       medicine: '医薬品'
-      petroleum_coal: '石油・石炭'
+      petroleum_coal: '石油・石炭製品'
       rubber: 'ゴム製品'
-      glass_stone: 'ガラス・土石'
+      glass_stone: 'ガラス・土石製品'
       iron: '鉄鋼'
       metal_exiron: '非鉄金属'
       metal: '金属製品'
@@ -29,7 +29,7 @@ ja:
       land_transport: '陸運業'
       shipping: '海運業'
       sky_transport: '空運業'
-      warehouse_conveyance: '倉庫・運輸'
+      warehouse_conveyance: '倉庫・運輸関連業'
       communication: '情報・通信業'
       wholesale: '卸売業'
       retail: '小売業'
@@ -55,9 +55,33 @@ ja:
       f: '福証'
       f_q: '福証Q-Board'
 
-    foreign_exchange:
+    currency:
       usdjpy: 'ドル/円'
       eurjpy: 'ユーロ/円'
+
+    bracket:
+      nikkei225: '日経平均株価'
+      topix: 'TOPIX 東証株価指数'
+      jasdaq: 'JASDAQ総合指数'
+      dji: 'ダウ工業株30種平均'
+      nasdaq: 'ナスダック指数'
+      sse: '上海総合指数'
+      hsi: '香港ハンセン株価指数'
+
+    trend_source:
+      nikkei: '日経新聞'
+
+    tag_type:
+      category: 'カテゴリー'
+      trend: 'トレンド'
+      alias: 'エイリアス'
+      ignore: '無視'
+
+    commodity:
+      gold: '金先物'
+      us_wheat: '小麦先物'
+      crude_oil: 'WTI原油先物'
+
 
 
 

@@ -7,6 +7,7 @@ class CreateTransactions < ActiveRecord::Migration
       t.integer :opening_price
       t.integer :closing_price
       t.integer :turnover
+      t.float :vwap
       t.integer :company_id
 
       t.timestamps null: false

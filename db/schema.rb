@@ -11,7 +11,50 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150720135752) do
+ActiveRecord::Schema.define(version: 20151009113728) do
+
+  create_table "articles", force: :cascade do |t|
+    t.string   "title",      limit: 255
+    t.string   "url",        limit: 255
+    t.string   "source",     limit: 255
+    t.date     "date"
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  add_index "articles", ["url"], name: "index_articles_on_url", unique: true, using: :btree
+
+  create_table "articles_companies", force: :cascade do |t|
+    t.integer "article_id", limit: 4
+    t.integer "company_id", limit: 4
+  end
+
+  create_table "brackets", force: :cascade do |t|
+    t.integer  "bracket_code",  limit: 4
+    t.float    "opening_price", limit: 24
+    t.float    "high_price",    limit: 24
+    t.float    "low_price",     limit: 24
+    t.float    "closing_price", limit: 24
+    t.date     "date"
+    t.integer  "turnover",      limit: 8
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
+  end
+
+  add_index "brackets", ["bracket_code", "date"], name: "index_brackets_on_bracket_code_and_date", unique: true, using: :btree
+
+  create_table "commodities", force: :cascade do |t|
+    t.date     "date"
+    t.integer  "commodity_code", limit: 4
+    t.float    "opening_price",  limit: 24
+    t.float    "high_price",     limit: 24
+    t.float    "low_price",      limit: 24
+    t.float    "closing_price",  limit: 24
+    t.datetime "created_at",                null: false
+    t.datetime "updated_at",                null: false
+  end
+
+  add_index "commodities", ["commodity_code", "date"], name: "index_commodities_on_commodity_code_and_date", unique: true, using: :btree
 
   create_table "companies", force: :cascade do |t|
     t.integer  "company_code",      limit: 4
@@ -29,6 +72,8 @@ ActiveRecord::Schema.define(version: 20150720135752) do
     t.datetime "updated_at",                      null: false
   end
 
+  add_index "companies", ["company_code"], name: "index_companies_on_company_code", unique: true, using: :btree
+
   create_table "companies_tags", id: false, force: :cascade do |t|
     t.integer "company_id", limit: 4
     t.integer "tag_id",     limit: 4
@@ -44,6 +89,8 @@ ActiveRecord::Schema.define(version: 20150720135752) do
     t.datetime "updated_at",                 null: false
   end
 
+  add_index "credit_deals", ["company_id", "date"], name: "index_credit_deals_on_company_id_and_date", unique: true, using: :btree
+
   create_table "foreign_exchanges", force: :cascade do |t|
     t.date     "date"
     t.float    "opening_price", limit: 24
@@ -55,10 +102,18 @@ ActiveRecord::Schema.define(version: 20150720135752) do
     t.datetime "updated_at",               null: false
   end
 
+  add_index "foreign_exchanges", ["currency_code", "date"], name: "index_foreign_exchanges_on_currency_code_and_date", unique: true, using: :btree
+
   create_table "tags", force: :cascade do |t|
     t.string   "name",       limit: 255
+    t.integer  "tag_type",   limit: 4
     t.datetime "created_at",             null: false
     t.datetime "updated_at",             null: false
+  end
+
+  create_table "tags_trends", force: :cascade do |t|
+    t.integer "trend_id", limit: 4
+    t.integer "tag_id",   limit: 4
   end
 
   create_table "transactions", force: :cascade do |t|
@@ -68,9 +123,20 @@ ActiveRecord::Schema.define(version: 20150720135752) do
     t.integer  "opening_price", limit: 4
     t.integer  "closing_price", limit: 4
     t.integer  "turnover",      limit: 4
+    t.float    "vwap",          limit: 24
     t.integer  "company_id",    limit: 4
-    t.datetime "created_at",              null: false
-    t.datetime "updated_at",              null: false
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
   end
+
+  add_index "transactions", ["company_id", "date"], name: "index_transactions_on_company_id_and_date", unique: true, using: :btree
+
+  create_table "trends", force: :cascade do |t|
+    t.date     "date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  add_index "trends", ["date"], name: "index_trends_on_date", unique: true, using: :btree
 
 end
