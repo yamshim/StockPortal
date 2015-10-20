@@ -21,4 +21,4 @@
 # Ignore something 
 /vendor/bundle
 /db/seeds/development
-
+/public/images/*
