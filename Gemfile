@@ -9,13 +9,16 @@ gem 'selenium-webdriver', '2.46.2'
 gem 'whenever', require: false
 gem 'pdf-reader'
 gem 'unicorn', '4.9.0'
+
 # for Logger
 gem 'ltsv'
 gem 'ltsvr'
 gem 'fluent-logger', '~> 0.4.9'
 
+# for assets
 gem 'jquery-rails'
 gem 'jquery-ui-rails'
+gem 'uglifier'
 
 group :development, :test do
   gem 'pry'
