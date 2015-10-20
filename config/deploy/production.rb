@@ -36,7 +36,7 @@ server '153.126.139.250', user: 'akasatana', roles: %w{web app db}
 # server 'example.com',
 #   user: 'user_name',
 #   roles: %w{web app},
-ssh_options: {
+set :ssh_options, {
   user: 'akasatana', # overrides user setting above
   keys: %w(/Users/akasatana/.ssh/id_rsa),
   forward_agent: true,

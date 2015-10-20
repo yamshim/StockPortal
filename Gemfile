@@ -29,6 +29,8 @@ group :deployment do
 end
 
 group :assets do
+  gem 'jquery-rails'
+  gem 'jquery-ui-rails'
 end
 
 
