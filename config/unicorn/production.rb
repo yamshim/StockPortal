@@ -4,7 +4,7 @@ timeout 15
 preload_app true  # 更新時ダウンタイム無し
 
 listen "/tmp/unicorn.sock", :backlog => 64
-pid "/var/www/StockPotal/shared/tmp/pids/unicorn.pid"
+pid "/var/www/StockPortal/shared/tmp/pids/unicorn.pid"
 
 before_fork do |server, worker|
   Signal.trap 'TERM' do
