@@ -14,6 +14,9 @@ gem 'ltsv'
 gem 'ltsvr'
 gem 'fluent-logger', '~> 0.4.9'
 
+gem 'jquery-rails'
+gem 'jquery-ui-rails'
+
 group :development, :test do
   gem 'pry'
   gem 'pry-rails'
@@ -29,8 +32,6 @@ group :deployment do
 end
 
 group :assets do
-  gem 'jquery-rails'
-  gem 'jquery-ui-rails'
 end
 
 
