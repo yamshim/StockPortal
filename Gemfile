@@ -16,9 +16,14 @@ gem 'ltsvr'
 gem 'fluent-logger', '~> 0.4.9'
 
 # for assets
-gem 'jquery-rails'
-gem 'jquery-ui-rails'
+gem 'jquery-rails', '4.0.5'
+gem 'jquery-ui-rails', '5.0.5'
 gem 'uglifier'
+
+# for Linux
+gem 'libv8'
+gem 'execjs', '~> 2.6.0'
+gem 'therubyracer', '~> 0.12.2', :platforms => :ruby
 
 group :development, :test do
   gem 'pry'
