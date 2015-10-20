@@ -194,10 +194,10 @@ DEPENDENCIES
   capistrano-rails
   capistrano-rbenv
   capistrano3-unicorn
-  execjs
+  execjs (~> 2.6.0)
   fluent-logger (~> 0.4.9)
-  jquery-rails
-  jquery-ui-rails
+  jquery-rails (= 4.0.5)
+  jquery-ui-rails (= 5.0.5)
   libv8
   ltsv
   ltsvr
@@ -208,7 +208,7 @@ DEPENDENCIES
   pry-remote
   rails (= 4.2.3)
   selenium-webdriver (= 2.46.2)
-  therubyracer
+  therubyracer (~> 0.12.2)
   uglifier
   unicorn (= 4.9.0)
   whenever
