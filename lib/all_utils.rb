@@ -78,6 +78,7 @@ module AllUtils
       text_part do
         body hash
       end
+      add_file hash[:attachment] if hash[:attachment].present?
     end
     gmail.logout
   end
