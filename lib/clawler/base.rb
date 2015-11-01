@@ -142,10 +142,10 @@ module Clawler
       csv_text = get_csv_text(obj)
       lines = case @model_type
       when :trend
-        uniq_objs = CSV.parse(csv_text).map{|line| line[0]}
+        uniq_objs = CSV.parse(csv_text).map{|line| trim_to_date(line[0])}
         lines.reject{|line| uniq_objs.include?(line[0])}
       when :company, :transaction, :credit_deal, :foreign_exchange, :bracket, :commodity
-        uniq_objs = CSV.parse(csv_text).map{|line| line[1]}
+        uniq_objs = CSV.parse(csv_text).map{|line| trim_to_date(line[1])}
         lines.reject{|line| uniq_objs.include?(line[1])}
       when :article
         uniq_objs = CSV.parse(csv_text).map{|line| line[2]}
