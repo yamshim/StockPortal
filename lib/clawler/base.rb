@@ -118,7 +118,7 @@ module Clawler
       case @status
       when :build, :import
       when :patrol
-        hash[:lines] = @lines[-2..-1]
+        hash[:lines] = @lines[0..1]
       when :peel
         hash[:attachment] = "#{Rails.root}/public/images/#{Rails.env}/chart/9501/#{Date.today}.jpg"
       end
