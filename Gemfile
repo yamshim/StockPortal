@@ -9,6 +9,7 @@ gem 'selenium-webdriver', '2.46.2'
 gem 'whenever', require: false
 gem 'pdf-reader'
 gem 'unicorn', '4.9.0'
+gem 'gmail', '0.6.0'
 
 # for Logger
 gem 'ltsv'

@@ -44,24 +44,24 @@ module Clawler
       def self.get_transaction_line(transaction_info, company_code)
         transaction_line = []
         transaction_data = get_data(transaction_info)
-          return nil unless transaction_data.size == 7 # この条件なんとかしたい(分割: 1株 -> 1.1株)など除外
-          transaction_line << trim_to_date(transaction_data[0])
-          transaction_data.collect!{|data| data == '---' ? transaction_data[4] : data} if transaction_data.include?('---') # 始値---(非表示)がある場合、そこには終値を入れる
+        return nil unless transaction_data.size == 7 # この条件なんとかしたい(分割: 1株 -> 1.1株)など除外
+        transaction_line << trim_to_date(transaction_data[0])
+        transaction_data.collect!{|data| data == '---' ? transaction_data[4] : data} if transaction_data.include?('---') # 始値---(非表示)がある場合、そこには終値を入れる
 
-          # stock split adjust
-          (1..6).each{|index| transaction_data[index] = trim_to_f(transaction_data[index])}
-          if transaction_data[4] != transaction_data[6]
-            scale = (transaction_data[4] / transaction_data[6])
-            (1..4).each{|index| transaction_line << (transaction_data[index] / scale).to_i}
-            transaction_line << transaction_data[5].to_i
-          else
-            (1..5).each{|index| transaction_line << transaction_data[index].to_i}
-          end
-          if trim_to_date(transaction_data[0]).today?
-            transaction_line << Clawler::Sources::Kabutan.get_vwap(company_code)
-          end
-          transaction_line.unshift(company_code)
-          transaction_line
+        # stock split adjust
+        (1..6).each{|index| transaction_data[index] = trim_to_f(transaction_data[index])}
+        if transaction_data[4] != transaction_data[6]
+          scale = (transaction_data[4] / transaction_data[6])
+          (1..4).each{|index| transaction_line << (transaction_data[index] / scale).to_i}
+          transaction_line << transaction_data[5].to_i
+        else
+          (1..5).each{|index| transaction_line << transaction_data[index].to_i}
+        end
+        if trim_to_date(transaction_data[0]).today?
+          transaction_line << Clawler::Sources::Kabutan.get_vwap(company_code)
+        end
+        transaction_line.unshift(company_code)
+        transaction_line
       end
 
       # ---credit_deal---

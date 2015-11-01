@@ -16,21 +16,24 @@ module Clawler
         bracket_builder = self.new(:bracket, :build)
         bracket_builder.scrape
         bracket_builder.import
+        bracket_builder.finish
       end
 
       def self.patrol
         bracket_patroller = self.new(:bracket, :patrol)
         bracket_patroller.scrape
         bracket_patroller.import
+        bracket_patroller.finish
       end
 
       def self.import
         bracket_importer = self.new(:bracket, :import)
         bracket_importer.import
+        bracket_importer.finish
       end
 
       def set_cut_obj(bracket_code)
-        @cut_obj = ::Bracket.where(bracket_code: bracket_code).try(:map, &:date).try(:sort).try(:last)
+        @cut_obj = ::Bracket.where(bracket_code: bracket_code).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def scrape
@@ -76,11 +79,10 @@ module Clawler
       end
 
       def line_import
-        ::Bracket.transaction do
-          brackets = []
-
-          @lines.group_by{|random_line| random_line[0]}.each do |bracket_code, lines|
-            last_date = ::Bracket.where(bracket_code: bracket_code).try(:map, &:date).try(:sort).try(:last)
+        @lines.group_by{|random_line| random_line[0]}.each do |bracket_code, lines|
+          ::Bracket.transaction do
+            brackets = []
+            last_date = ::Bracket.where(bracket_code: bracket_code).try(:pluck, :date).try(:sort).try(:last)
             brackets_info = []
 
             lines.sort_by{|line| line[1]}.reverse.each do |line|
@@ -99,31 +101,22 @@ module Clawler
 
               brackets << ::Bracket.new(bracket_info)
             end
+            brackets.each(&:save!)
           end
-          brackets.each(&:save!)
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
       def csv_import
-        ::Bracket.transaction do
-          brackets = []
-          bracket_codes = cvals(:bracket)
+        bracket_codes = cvals(:bracket)
 
-          bracket_codes.each do |bracket_code|
-            last_date = ::Bracket.where(bracket_code: bracket_code).try(:map, &:date).try(:sort).try(:last)
+        bracket_codes.each do |bracket_code|
+          ::Bracket.transaction do
+            brackets = []
+            last_date = ::Bracket.where(bracket_code: bracket_code).try(:pluck, :date).try(:sort).try(:last)
             brackets_info = []
             csv_text = get_csv_text(bracket_code)
-            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse
+            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse.uniq
 
             lines.each do |line|
               if last_date.present?
@@ -141,19 +134,10 @@ module Clawler
 
               brackets << ::Bracket.new(bracket_info)
             end
+            brackets.each(&:save!)
           end
-          brackets.each(&:save!)
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
     end

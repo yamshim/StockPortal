@@ -16,21 +16,24 @@ module Clawler
         commodity_builder = self.new(:commodity, :build, true)
         commodity_builder.scrape
         commodity_builder.import
+        commodity_builder.finish
       end
 
       def self.patrol
         commodity_patroller = self.new(:commodity, :patrol, true)
         commodity_patroller.scrape
         commodity_patroller.import
+        commodity_patroller.finish
       end
 
       def self.import
         commodity_importer = self.new(:commodity, :import)
         commodity_importer.import
+        commodity_importer.finish
       end
 
       def set_cut_obj(commodity_code)
-        @cut_obj = ::Commodity.where(commodity_code: commodity_code).try(:map, &:date).try(:sort).try(:last)
+        @cut_obj = ::Commodity.where(commodity_code: commodity_code).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def scrape
@@ -64,11 +67,10 @@ module Clawler
       end
 
       def line_import
-        ::Commodity.transaction do
-          commodities = []
-
-          @lines.group_by{|random_line| random_line[0]}.each do |commodity_code, lines|
-            last_date = ::Commodity.where(commodity_code: commodity_code).try(:map, &:date).try(:sort).try(:last)
+        @lines.group_by{|random_line| random_line[0]}.each do |commodity_code, lines|
+          ::Commodity.transaction do
+            commodities = []
+            last_date = ::Commodity.where(commodity_code: commodity_code).try(:pluck, :date).try(:sort).try(:last)
             commodities_info = []
 
             lines.sort_by{|line| line[1]}.reverse.each do |line|
@@ -86,31 +88,22 @@ module Clawler
 
               commodities << ::Commodity.new(commodity_info)
             end
+            commodities.each(&:save!)
           end
-          commodities.each(&:save!)
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
       def csv_import
-        ::Commodity.transaction do
-          commodities = []
-          commodity_codes = cvals(:commodity)
+        commodity_codes = cvals(:commodity)
 
-          commodity_codes.each do |commodity_code|
-            last_date = ::Commodity.where(commodity_code: commodity_code).try(:map, &:date).try(:sort).try(:last)
+        commodity_codes.each do |commodity_code|
+          ::Commodity.transaction do
+            commodities = []
+            last_date = ::Commodity.where(commodity_code: commodity_code).try(:pluck, :date).try(:sort).try(:last)
             commodities_info = []
             csv_text = get_csv_text(commodity_code)
-            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse
+            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse.uniq
 
             lines.each do |line|
               if last_date.present?
@@ -127,19 +120,10 @@ module Clawler
 
               commodities << ::Commodity.new(commodity_info)
             end
+            commodities.each(&:save!)
           end
-          commodities.each(&:save!)
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
     end

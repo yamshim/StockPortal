@@ -16,17 +16,20 @@ module Clawler
         trend_builder = self.new(:trend, :build)
         trend_builder.scrape
         trend_builder.import
+        trend_builder.finish
       end
 
       def self.patrol
         trend_patroller = self.new(:trend, :patrol)
         trend_patroller.scrape
         trend_patroller.import
+        trend_patroller.finish
       end
 
       def self.import
         trend_importer = self.new(:trend, :import)
         trend_importer.import
+        trend_importer.finish
       end
 
       def set_cut_obj(source)
@@ -72,7 +75,7 @@ module Clawler
           words_scores = []
           lines.each{|line| words_scores += line[1]}
           processed_line += Clawler::Sources::Yahoo.process_line(words_scores)
-          processed_line = Clawler::Sources::Google.add_trend_line(processed_line) if (date + 1).today?
+          # processed_line = Clawler::Sources::Google.add_trend_line(processed_line) if (date + 1).today?
 
           processed_lines << processed_line
         end
@@ -104,25 +107,16 @@ module Clawler
           end
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
       def csv_import
-        ::Trend.transaction do
-          existing_tags = ::Tag.where(tag_type: c(:tag_type, :trend)).try(:map, &:name)
-          last_date = ::Trend.pluck(:date).try(:sort).try(:last)
+        existing_tags = ::Tag.where(tag_type: c(:tag_type, :trend)).try(:pluck, :name)
+        last_date = ::Trend.pluck(:date).try(:sort).try(:last)
 
-          cvals(:trend_source).each do |source|
+        cvals(:trend_source).each do |source|
+          ::Trend.transaction do
             csv_text = get_csv_text(source)
-            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[0])}.reverse
+            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[0])}.reverse.uniq
 
             lines.each do |line|
               if last_date.present?
@@ -144,15 +138,6 @@ module Clawler
           end
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
     end

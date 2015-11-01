@@ -16,21 +16,24 @@ module Clawler
         foreign_exchange_builder = self.new(:foreign_exchange, :build)
         foreign_exchange_builder.scrape
         foreign_exchange_builder.import
+        foreign_exchange_builder.finish
       end
 
       def self.patrol
         foreign_exchange_patroller = self.new(:foreign_exchange, :patrol)
         foreign_exchange_patroller.scrape
         foreign_exchange_patroller.import
+        foreign_exchange_patroller.finish
       end
 
       def self.import
         foreign_exchange_importer = self.new(:foreign_exchange, :import)
         foreign_exchange_importer.import
+        foreign_exchange_importer.finish
       end
 
       def set_cut_obj(currency_code)
-        @cut_obj = ::ForeignExchange.where(currency_code: currency_code).try(:map, &:date).try(:sort).try(:last)
+        @cut_obj = ::ForeignExchange.where(currency_code: currency_code).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def scrape
@@ -65,11 +68,10 @@ module Clawler
       end
 
       def line_import
-        ::ForeignExchange.transaction do
-          foreign_exchanges = []
-
-          @lines.group_by{|random_line| random_line[0]}.each do |currency_code, lines|
-            last_date = ::ForeignExchange.where(currency_code: currency_code).try(:map, &:date).try(:sort).try(:last)
+        @lines.group_by{|random_line| random_line[0]}.each do |currency_code, lines|
+          ::ForeignExchange.transaction do
+            foreign_exchanges = []
+            last_date = ::ForeignExchange.where(currency_code: currency_code).try(:pluck, :date).try(:sort).try(:last)
             foreign_exchanges_info = []
 
             lines.sort_by{|line| line[1]}.reverse.each do |line|
@@ -87,31 +89,21 @@ module Clawler
 
               foreign_exchanges << ::ForeignExchange.new(foreign_exchange_info)
             end
+            foreign_exchanges.each(&:save!)
           end
-          foreign_exchanges.each(&:save!)
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
       def csv_import
-        ::ForeignExchange.transaction do
-          foreign_exchanges = []
-          currency_codes = cvals(:currency)
-          currency_codes.each do |currency_code|
-
-            last_date = ::ForeignExchange.where(currency_code: currency_code).try(:map, &:date).try(:sort).try(:last)
+        currency_codes = cvals(:currency)
+        currency_codes.each do |currency_code|
+          ::ForeignExchange.transaction do
+            foreign_exchanges = []
+            last_date = ::ForeignExchange.where(currency_code: currency_code).try(:pluck, :date).try(:sort).try(:last)
             foreign_exchanges_info = []
             csv_text = get_csv_text(currency_code)
-            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse
+            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse.uniq
 
             lines.each do |line|
               if last_date.present?
@@ -128,19 +120,10 @@ module Clawler
 
               foreign_exchanges << ::ForeignExchange.new(foreign_exchange_info)
             end
+            foreign_exchanges.each(&:save!)
           end
-          foreign_exchanges.each(&:save!)
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
     end

@@ -11,31 +11,34 @@ module Clawler
       end
 
       def self.get_articles_url(word, page)
-        home_url + "/search?q=#{URI.encode(word)}&tbm=nws&start=#{(page - 1) * 10}"
+        case rand(3)
+        when 0
+          "https://www.google.co.jp/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&hl=ja&gl=jp&authuser=0&tbm=nws&start=#{(page - 1) * 10}"
+        when 1
+          "https://www.google.co.jp/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&start=#{(page - 1) * 10}"
+        when 2
+          "https://www.google.co.jp/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&oq=#{URI.encode(word)}&start=#{(page - 1) * 10}"
+        end
       end
 
       def self.get_articles_info(company_name, page)
         articles_url = get_articles_url(company_name, page)
         articles_doc = get_content(articles_url, :long)
-        articles_info = articles_doc.xpath('//li[@class="g"]')
+        articles_info = articles_doc.css('.g')
         articles_info
       end
 
-      def self.get_article_lines(articles_info, company_name)
-        article_lines = articles_info.map do |li|
-          # 完全に拾えないliがある
+      def self.get_article_lines(articles_info, company_name, last_line)
+        article_lines = []
+        articles_info.each do |line|
+          # 完全に拾えないlineがある
           # titleが不完全
           # class slpが掴めない場合がある
 
-          article_title = li.css('a').text
-          article_url = CGI.parse(home_url + li.css('a').attribute('href').value)['http://www.google.co.jp/url?q'][0]
-          if li.css('.slp').present?
-            ary = li.css('.slp').text.strip.split(' - ')
-            if ary.size == 2
-              article_source = ary[0]
-            else
-              article_source = ary[0..-2].sum
-            end
+          article_title = line.css('h3').text
+          if line.css('.slp').present?
+            ary = line.css('.slp').xpath('span').map(&:text)
+            article_source = ary[0]
             if ary[-1] =~ /(.+)日前/
               article_date = Date.today - $1.to_i
             elsif ary[-1] =~ /(.+)時間前/
@@ -50,9 +53,14 @@ module Clawler
           else
             next
           end
-          [company_name, article_title, article_url, article_source, article_date]
+
+          article_urls = line.css('a').map{|a| a.attribute('href').value}.uniq.reject{|url| url =~ /google/}
+          lines = article_urls.map do |article_url|
+            [company_name, article_title, article_url, article_source, article_date]
+          end
+          article_lines += lines
         end
-        article_lines.compact
+        (article_lines[-1] == last_line) ? nil : article_lines
       end
 
       def self.get_trend_url

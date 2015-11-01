@@ -16,27 +16,30 @@ module Clawler
         transaction_builder = self.new(:transaction, :build)
         transaction_builder.scrape
         transaction_builder.import
+        transaction_builder.finish
       end
 
       def self.patrol
         transaction_patroller = self.new(:transaction, :patrol)
         transaction_patroller.scrape
         transaction_patroller.import
+        transaction_patroller.finish
       end
 
       def self.import
         transaction_importer = self.new(:transaction, :import)
         transaction_importer.import
+        transaction_importer.finish
       end
 
       def self.peel
         transaction_peeler = self.new(:transaction, :peel, true)
         transaction_peeler.scrape
-        transaction_peeler.import
+        transaction_peeler.finish
       end
 
       def set_cut_obj(company_code)
-        @cut_obj = ::Company.find_by_company_code(company_code).try(:transactions).try(:map, &:date).try(:sort).try(:last)
+        @cut_obj = ::Company.find_by_company_code(company_code).try(:transactions).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def scrape
@@ -54,8 +57,6 @@ module Clawler
           super(self.method(:csv_import))
         when :patrol
           super(self.method(:line_import))
-        when :peel
-          CLAWL_LOGGER.info(cmd: "#{@model_type}##{@status}=end")
         end
       end
 
@@ -79,13 +80,13 @@ module Clawler
       end
 
       def line_import
-        ::Company.transaction do
-          companies = ::Company.includes(:transactions)
+        companies = ::Company.all
 
-          @lines.group_by{|random_line| random_line[0]}.each do |company_code, lines|
+        @lines.group_by{|random_line| random_line[0]}.each do |company_code, lines|
+          ::Company.transaction do
             transactions_info = []
             company = companies.select{|c| c.company_code == company_code}[0]
-            last_date = company.try(:transactions).try(:map, &:date).try(:sort).try(:last)
+            last_date = company.try(:transactions).try(:pluck, :date).try(:sort).try(:last)
 
             lines.sort_by{|line| line[1]}.reverse.each do |line|
               if last_date.present? # 重複チェックに変えるべき?
@@ -107,26 +108,17 @@ module Clawler
           end
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
       def csv_import
-        ::Company.transaction do
-          companies = ::Company.includes(:transactions)
+        companies = ::Company.all
 
-          companies.each do |company|
-            last_date = company.try(:transactions).try(:map, &:date).try(:sort).try(:last)
+        companies.each do |company|
+          ::Company.transaction do
+            last_date = company.try(:transactions).try(:pluck, :date).try(:sort).try(:last)
             transactions_info = []
             csv_text = get_csv_text(company.company_code)
-            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse
+            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse.uniq
 
             lines.each do |line|
               if last_date.present? # 重複チェックに変えるべき?
@@ -147,15 +139,6 @@ module Clawler
           end
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
       def chart_scrape(company_code, page)
@@ -164,8 +147,8 @@ module Clawler
         file_name = dir_name + "/#{Date.today}.jpg"
         unless File.size?(file_name)
           Clawler::Sources::Sbi.get_chart(company_code, file_name, @driver, @watch)
-          return {type: :break, lines: nil}
         end
+        return {type: :break, lines: nil}
       end
 
     end

@@ -16,21 +16,24 @@ module Clawler
         credit_deal_builder = self.new(:credit_deal, :build)
         credit_deal_builder.scrape
         credit_deal_builder.import
+        credit_deal_builder.finish
       end
 
       def self.patrol
         credit_deal_patroller = self.new(:credit_deal, :patrol)
         credit_deal_patroller.scrape
         credit_deal_patroller.import
+        credit_deal_patroller.finish
       end
 
       def self.import
         credit_deal_importer = self.new(:credit_deal, :import)
         credit_deal_importer.import
+        credit_deal_importer.finish
       end
 
       def set_cut_obj(company_code)
-        @cut_obj = ::Company.find_by_company_code(company_code).try(:credit_deals).try(:map, &:date).try(:sort).try(:last)
+        @cut_obj = ::Company.find_by_company_code(company_code).try(:credit_deals).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def scrape
@@ -65,13 +68,13 @@ module Clawler
       end
 
       def line_import
-        ::Company.transaction do
-          companies = ::Company.all
+        companies = ::Company.all
 
-          @lines.group_by{|random_line| random_line[0]}.each do |company_code, lines|
+        @lines.group_by{|random_line| random_line[0]}.each do |company_code, lines|
+          ::Company.transaction do
             credit_deals_info = []
             company = companies.select{|c| c.company_code == company_code}[0]
-            last_date = company.try(:credit_deals).try(:map, &:date).try(:sort).try(:last)
+            last_date = company.try(:credit_deals).try(:pluck, :date).try(:sort).try(:last)
 
             lines.sort_by{|line| line[1]}.reverse.each do |line|
               if last_date.present?
@@ -89,19 +92,17 @@ module Clawler
           end
         end
         true
-      rescue => ex
-        p ex
       end
 
       def csv_import
-        ::Company.transaction do
-          companies = ::Company.all
+        companies = ::Company.all
 
-          companies.each do |company|
-            last_date = company.try(:credit_deals).try(:map, &:date).try(:sort).try(:last)
+        companies.each do |company|
+          ::Company.transaction do
+            last_date = company.try(:credit_deals).try(:pluck, :date).try(:sort).try(:last)
             credit_deals_info = []
             csv_text = get_csv_text(company.company_code)
-            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse
+            lines = CSV.parse(csv_text).sort_by{|line| trim_to_date(line[1])}.reverse.uniq
 
             lines.each do |line|
               if last_date.present?
@@ -119,10 +120,7 @@ module Clawler
           end
         end
         true
-      rescue => ex
-        p ex
       end
-
 
     end
   end

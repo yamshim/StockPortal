@@ -16,21 +16,24 @@ module Clawler
         company_builder = self.new(:company, :build)
         company_builder.scrape
         company_builder.import
+        company_builder.finish
       end
 
       def self.patrol
         company_patroller = self.new(:company, :patrol)
         company_patroller.scrape
         company_patroller.import
+        company_patroller.finish
       end
 
       def self.import
         company_importer = self.new(:company, :import)
         company_importer.import
+        company_importer.finish
       end
 
       def set_cut_obj(industry_code)
-        @cut_obj = ::Company.where(industry_code: industry_code).map(&:company_code).sort # この処理はもっと上で行って1回きりでも
+        @cut_obj = ::Company.where(industry_code: industry_code).try(:pluck, :company_code).try(:sort) # この処理はもっと上で行って1回きりでも
       end  
 
       def scrape
@@ -91,26 +94,17 @@ module Clawler
           companies.each(&:save!)
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
-      def csv_import
-        ::Company.transaction do
-          companies = []
-          existing_company_codes = ::Company.pluck(:company_code).sort
-          industry_codes = cvals(:industry)
+      def csv_import        
+        existing_company_codes = ::Company.pluck(:company_code).sort
+        industry_codes = cvals(:industry)
 
-          industry_codes.each do |industry_code|
+        industry_codes.each do |industry_code|
+          ::Company.transaction do
+            companies = []
             csv_text = get_csv_text(industry_code)
-            lines = CSV.parse(csv_text)
+            lines = CSV.parse(csv_text).uniq
             lines.each do |line|
               unless existing_company_codes.include?(line[1].to_i)
                 company_info = {}
@@ -130,19 +124,10 @@ module Clawler
                 existing_company_codes << company_info[:company_code]
               end
             end
+            companies.each(&:save!)
           end
-          companies.each(&:save!)
         end
         true
-      rescue => ex
-        error = {}
-        error[:error_name] = ex.class.name
-        error[:error_message] = ex.message
-        error[:error_backtrace] = ex.backtrace[0]
-        error[:error_file] = __FILE__
-        error[:error_line] = __LINE__
-        error[:error_count] = 1
-        CLAWL_LOGGER.info(error)
       end
 
     end

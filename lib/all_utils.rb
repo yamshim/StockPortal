@@ -68,5 +68,18 @@ module AllUtils
     Date.new(*str.split(/[^0-9]/).map{|char| char.to_i})
   end
 
+  def send_logger_mail(hash)
+    gmail = Gmail.connect('akasatana.log@gmail.com', 'yamshim05')
+    gmail.deliver do
+      body_encoding = 'UTF-8'
+      charset = 'UTF-8'
+      to 'akasatana.log@gmail.com'
+      subject hash[:action]
+      text_part do
+        body hash
+      end
+    end
+    gmail.logout
+  end
 
 end

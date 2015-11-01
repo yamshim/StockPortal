@@ -31,8 +31,8 @@ module Clawler
         select.select_by(:index, 0)
         src = watch.until{driver.find_element(id: 'chartImg').attribute('src')}
 
-        open(file_name, 'wb') do |file|
-          open(src) do |data|
+        open(file_name, 'wb:utf-8') do |file|
+          open(src, 'rb:utf-8') do |data|
             # file.write(Zlib::Deflate.deflate(data.read))
             file.write(data.read)
           end
