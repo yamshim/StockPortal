@@ -37,6 +37,9 @@ module Clawler
             end
           end
         end
+        texts << text
+        texts.reject!{|text| text.blank?}
+
         [date, texts]
       end
 

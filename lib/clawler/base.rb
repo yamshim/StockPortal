@@ -196,7 +196,7 @@ module Clawler
     def uniq_lines(lines)
       lines = case @model_type
       when :trend
-        lines.uniq{|line| line[0]}
+        lines
       when :company, :transaction, :credit_deal, :foreign_exchange, :bracket, :commodity
         lines.uniq{|line| line[1]}
       when :article
