@@ -22,10 +22,6 @@ set :whenever_identifier, ->{ "#{fetch(:application)}_#{fetch(:stage)}" }
 
 after 'deploy:publishing', 'deploy:restart'
 namespace :deploy do
-  task :start do
-    run "source #{deploy_to}/.env"
-  end
-  
   task :restart do
     invoke 'unicorn:restart'
   end
