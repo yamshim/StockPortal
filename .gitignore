@@ -7,6 +7,6 @@
 !/log/.keep
 /tmp/*
 /vendor/bundle
-/db/seeds/csv/development/*
-/public/images/development/*
+/db/seeds/csv/*
+/public/images/*
 .env
