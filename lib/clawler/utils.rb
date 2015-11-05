@@ -15,6 +15,7 @@ module Clawler
         charset = html.charset
         Nokogiri::HTML.parse(html, nil, charset) 
       rescue OpenURI::HTTPError => ex
+        # 503 Service Unavailable のとき
         error[:error_count] += 1
         if error[:error_count] % 100 == 0
           error[:action] = "LOAD=#{$proxy}##{url}=ERROR"
@@ -76,6 +77,7 @@ module Clawler
       doc = get_content('http://lab.magicvox.net/proxy/', :short)
       $proxies += doc.xpath('//tr')[1..-1].map{|tr| 'http://' + tr.css('.host').text + ':' + tr.css('.port').text}
       $proxies.uniq!
+      write_proxies
     end
 
     def change_proxy

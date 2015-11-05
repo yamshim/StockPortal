@@ -11,15 +11,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151009113728) do
+ActiveRecord::Schema.define(version: 20151104133621) do
 
   create_table "articles", force: :cascade do |t|
-    t.string   "title",      limit: 255
-    t.string   "url",        limit: 255
-    t.string   "source",     limit: 255
+    t.string   "title",       limit: 255
+    t.string   "url",         limit: 255
+    t.string   "source",      limit: 255
     t.date     "date"
-    t.datetime "created_at",             null: false
-    t.datetime "updated_at",             null: false
+    t.datetime "created_at",                null: false
+    t.datetime "updated_at",                null: false
+    t.text     "description", limit: 65535
   end
 
   add_index "articles", ["url"], name: "index_articles_on_url", unique: true, using: :btree

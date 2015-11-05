@@ -4,39 +4,39 @@ country:
   china: 2
 
 industry:
-  forestry_fishery: 0
-  mining: 1
-  building: 2
-  food: 3
-  fiber: 4
-  paper_pulp: 5
-  chemical: 6
-  medicine: 7
-  petroleum_coal: 8
-  rubber: 9
-  glass_stone: 10
-  iron: 11
-  metal_exiron: 12
-  metal: 13
-  machinery: 14
-  electrical: 15
-  transport_machinery: 16
-  precision_machinery: 17
-  misc_machinery: 18
-  electricity_gas: 19
-  land_transport: 20
-  shipping: 21
-  sky_transport: 22
-  warehouse_conveyance: 23
-  communication: 24
-  wholesale: 25
-  retail: 26
-  bank: 27
-  bill_broker: 28
-  insurer: 29
-  financial: 30
-  estate: 31
-  service: 32
+  fis: 0
+  mng: 1
+  con: 2
+  fod: 3
+  txt: 4
+  pap: 5
+  che: 6
+  pha: 7
+  oil: 8
+  rub: 9
+  gls: 10
+  stl: 11
+  nfr: 12
+  met: 13
+  mac: 14
+  elc: 15
+  teq: 16
+  prc: 17
+  mis: 18
+  elg: 19
+  prl: 20
+  shp: 21
+  air: 22
+  whs: 23
+  com: 24
+  who: 25
+  ret: 26
+  bnk: 27
+  sec: 28
+  ins: 29
+  fin: 30
+  rea: 31
+  svc: 32
 
 market:
   t_1: 0

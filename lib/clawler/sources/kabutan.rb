@@ -30,13 +30,10 @@ module Clawler
         company_line << c(:country, :japan) # country_code
         company_line << company_code # company_code
 
-        company_url = get_company_url(company_code)
-        company_doc = get_content(company_url, :middle)
-        company_info1 = company_doc.xpath('//table[@class="kobetsu_data_table1"]').css('tr')[0].text.gsub(/(\r\n)+/, '-').split('-')
+        company_info1, company_info2, company_info3 = get_company_info(company_code) 
         company_line << company_info1[2] # name
-        company_line << get_market(company_info1[3]) # market_code
+        company_line << get_market_code(company_info1[3]) # market_code
 
-        company_info2 = company_doc.xpath('//table[@class="kobetsu_data_table2"]').css('td')
         if c(:industry, industry_code) =~ %r|#{company_info2[1].text.strip}|
           company_line << industry_code #industry_code
         else
@@ -44,7 +41,6 @@ module Clawler
         end
         company_line << trim_to_i(company_info2[2].text) # trading_unit
 
-        company_info3 = company_doc.xpath('//ul').css('dd')
         company_line << company_info3[0].text # url
                 
         # yahooで基本情報を集める
@@ -56,38 +52,49 @@ module Clawler
         company_line
       end
 
+      def self.get_company_info(company_code)
+        company_url = get_company_url(company_code)
+        company_doc = get_content(company_url, :middle)
+        company_info1 = company_doc.xpath('//table[@class="kobetsu_data_table1"]').css('tr')[0].text.gsub(/(\r\n)+/, '-').split('-')
+        company_info2 = company_doc.xpath('//table[@class="kobetsu_data_table2"]').css('td')
+        company_info3 = company_doc.xpath('//ul').css('dd')
+        [company_info1, company_info2, company_info3]
+      end
+
       def self.get_company_url(company_code)
         "http://kabutan.jp/stock/?code=#{company_code}"
       end
 
-      def self.get_market(market_name)
+      def self.get_market_code(market_name)
         case market_name
         when "東証１"
-        c(:market, :t_1)
+          c(:market, :t_1)
         when "東証２"
-        c(:market, :t_2)
+          c(:market, :t_2)
         when "ＪＱ"
-        c(:market, :t_js)
+          c(:market, :t_js)
         when "ＪＱＧ"
-        c(:market, :t_jg)
+          c(:market, :t_jg)
         when "東証Ｍ"
-        c(:market, :t_m)
+          c(:market, :t_m)
         when "東証外"
-        c(:market, :t_f)
+          c(:market, :t_f)
         when "札証"
-        c(:market, :s)
+          c(:market, :s)
         when "札証Ａ"
-        c(:market, :s_a)
+          c(:market, :s_a)
         when "名証１"
-        c(:market, :m_1)
+          c(:market, :m_1)
         when "名証２"
-        c(:market, :m_2)
+          c(:market, :m_2)
         when "名証Ｃ"
-        c(:market, :m_c)
+          c(:market, :m_c)
         when "福証"
-        c(:market, :f)
+          c(:market, :f)
         when "福証Ｑ"
-        c(:market, :f_q)
+          c(:market, :f_q)
+        else
+          nil
         end
       end
 

@@ -15,7 +15,7 @@ role :db,  %w{akasatana@153.126.139.250}
 # server list. The second argument is a, or duck-types, Hash and is
 # used to set extended properties on the server.
 
-server '153.126.139.250', user: 'akasatana', roles: %w{web app db}
+server ENV['SERVER_IP'], user: ENV['SERVER_USER'], roles: %w{web app db}
 
 
 # Custom SSH Options
@@ -37,10 +37,10 @@ server '153.126.139.250', user: 'akasatana', roles: %w{web app db}
 #   user: 'user_name',
 #   roles: %w{web app},
 set :ssh_options, {
-  user: 'akasatana', # overrides user setting above
-  keys: %w(/Users/akasatana/.ssh/id_rsa),
+  user: ENV['SERVER_USER'], # overrides user setting above
+  keys: %W(#{ENV['SSH_SECRET_KEY']}),
   forward_agent: true,
   auth_methods: %w(publickey),
-  port: '61203'
+  port: ENV['SSH_PORT']
 #     # password: 'please use keys'
 }

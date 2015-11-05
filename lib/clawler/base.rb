@@ -25,34 +25,38 @@ module Clawler
         begin
           objs[set..-1].each do |obj|
             obj_lines = []
-            set_cut_obj(obj) if @status == :patrol
+            set_cut_obj(obj) if [:patrol, :update].include?(@status)
             (1..1000000).each do |page|
-              CLAWL_LOGGER.info({action: "SCRAPE=#{@model_type}##{@status}=PROGRESS", obj: obj, page: page})
+              CLAWL_LOGGER.info({action: "SCRAPE=#{@model_type}##{@status}=PROGRESS", obj: obj, page: page, proxy: $proxy})
               result = each_scrape.call(obj, page)
               case result[:type]
               when :break
+                obj_lines = uniq_lines(obj_lines)
+                @lines = (@lines || []) + obj_lines
                 break
               when :next
                 next
               when :part
                 obj_lines = obj_lines + result[:lines]
-                @lines = (@lines || []) + result[:lines]
               when :all
                 obj_lines = obj_lines + result[:lines]
-                @lines = (@lines || []) + result[:lines]
+                obj_lines = uniq_lines(obj_lines)
+                @lines = (@lines || []) + obj_lines
                 break
               end
             end
             obj_lines = self.post_process(obj_lines) if @model_type == :trend
             @lines = [] if @status == :build
+
             build_csv(obj_lines, obj) if @status == :build
-            update_csv(obj_lines, obj) if @status == :patrol
+            add_csv(obj_lines, obj) if @status == :patrol
+            update_csv(obj_lines, obj) if @status == :update
             set += 1 # 上記の処理が全て成功していたらカウント
           end
         rescue => ex
           if error[:error_name] == ex.class.name && error[:error_message] == ex.message && error[:error_backtrace] == ex.backtrace[0]
             error[:error_count] += 1
-            if error[:error_count] > 10
+            if error[:error_count] >= 10
               @driver.quit unless @driver.nil?
               CLAWL_LOGGER.info(error)
               send_logger_mail(error)
@@ -116,7 +120,7 @@ module Clawler
       hash = {}
       hash[:action] = "FINISH##{@model_type}=#{@status}=SUCCESS"
       case @status
-      when :build, :import
+      when :build, :import, :update
       when :patrol
         hash[:lines] = @lines[0..1]
       when :peel
@@ -138,13 +142,16 @@ module Clawler
       end
     end
 
-    def update_csv(lines, obj)
+    def add_csv(lines, obj)
       csv_text = get_csv_text(obj)
       lines = case @model_type
       when :trend
         uniq_objs = CSV.parse(csv_text).map{|line| trim_to_date(line[0])}
         lines.reject{|line| uniq_objs.include?(line[0])}
-      when :company, :transaction, :credit_deal, :foreign_exchange, :bracket, :commodity
+      when :company
+        uniq_objs = CSV.parse(csv_text).map{|line| line[1].to_i}
+        lines.reject{|line| uniq_objs.include?(line[1])}
+      when :transaction, :credit_deal, :foreign_exchange, :bracket, :commodity
         uniq_objs = CSV.parse(csv_text).map{|line| trim_to_date(line[1])}
         lines.reject{|line| uniq_objs.include?(line[1])}
       when :article
@@ -159,10 +166,42 @@ module Clawler
       end
     end
 
+    def update_csv(lines, obj)
+      csv_text = get_csv_text(obj)
+      csv_lines = CSV.parse(csv_text).uniq
+      lines = case @model_type
+      when :company
+        update_company_codes = lines.map{|line| line[1]}
+        csv_lines = csv_lines.reject{|csv_line| update_company_codes.include?(csv_line[1].to_i)}
+        (csv_lines + lines).sort_by{|line| line[1].to_i}
+      when :article
+        update_urls = lines.map{|line| line[2]}
+        csv_lines = csv_lines.reject{|csv_line| update_urls.include?(csv_line[2])}
+        (csv_lines + lines)
+      end
+        
+      CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}/#{@model_type}_lines_#{obj}.csv", 'wb') do |writer|
+        lines.each do |line|
+          writer << line
+        end
+      end
+    end
+
     def get_csv_text(obj)
       open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}/#{@model_type}_lines_#{obj}.csv", &:read).toutf8.strip
     rescue => ex
       '' # ファイルが存在しない時空文字を返す
+    end
+
+    def uniq_lines(lines)
+      lines = case @model_type
+      when :trend
+        lines.uniq{|line| line[0]}
+      when :company, :transaction, :credit_deal, :foreign_exchange, :bracket, :commodity
+        lines.uniq{|line| line[1]}
+      when :article
+        lines.uniq{|line| line[2]}
+      end
     end
 
     def set_selenium

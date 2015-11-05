@@ -32,8 +32,15 @@ module Clawler
         company_importer.finish
       end
 
+      def self.update
+        company_updater = self.new(:company, :update)
+        company_updater.scrape
+        company_updater.import
+        company_updater.finish
+      end
+
       def set_cut_obj(industry_code)
-        @cut_obj = ::Company.where(industry_code: industry_code).try(:pluck, :company_code).try(:sort) # この処理はもっと上で行って1回きりでも
+        @cut_obj = ::Company.where(industry_code: industry_code).try(:pluck, :company_code).try(:sort)
       end  
 
       def scrape
@@ -46,24 +53,40 @@ module Clawler
           super(self.method(:csv_import))
         when :patrol
           super(self.method(:line_import))
-        end 
+        when :update
+          super(self.method(:update_import))
+        end
       end
 
       def each_scrape(industry_code, page)
         company_lines = []
-        company_codes = Clawler::Sources::Kabutan.get_company_codes(industry_code, page)
 
-        return {type: :break, lines: nil} if company_codes.empty?
-        if @status == :patrol
-          return {type: :next, lines: nil} if (company_codes = company_codes - @cut_obj).empty?
+        case @status
+        when :build, :patrol
+          company_codes = Clawler::Sources::Kabutan.get_company_codes(industry_code, page)
+
+          return {type: :break, lines: nil} if company_codes.empty?
+          if @status == :patrol && @cut_obj.present?
+            return {type: :next, lines: nil} if (company_codes = company_codes - @cut_obj).empty?
+          end
+
+          company_codes.each do |company_code|
+            company_line = Clawler::Sources::Kabutan.get_company_line(company_code, industry_code)
+            next if company_line.nil?          
+            company_lines << company_line
+          end
+        when :update
+          company_headers = Clawler::Sources::Rakuten.get_company_headers(industry_code, page)
+
+          return {type: :break, lines: nil} if company_headers.empty?
+          company_headers = company_headers.select{|company_header| @cut_obj.include?(company_header[1].split('.')[0].to_i)}
+
+          company_headers.each do |company_header|
+            company_line = Clawler::Sources::Rakuten.get_company_line(company_header, industry_code)
+            company_lines << company_line
+          end
         end
 
-        company_codes.each do |company_code|
-          company_line = Clawler::Sources::Kabutan.get_company_line(company_code, industry_code)
-          next if company_line.nil?          
-
-          company_lines << company_line
-        end
         return {type: :part, lines: company_lines}
       end
 
@@ -125,6 +148,30 @@ module Clawler
               end
             end
             companies.each(&:save!)
+          end
+        end
+        true
+      end
+
+      def update_import
+        ::Company.transaction do
+          @lines.each do |line|
+            company = ::Company.find_by_company_code(line[1])
+
+            company_info = {}
+            # company_info[:country_code] = line[0]
+            # company_info[:company_code] = line[1]
+            company_info[:name] = line[2]
+            # company_info[:market_code] = line[3]
+            # company_info[:industry_code] = line[4]
+            # company_info[:trading_unit] = line[5]
+            # company_info[:url] = line[6]
+            # company_info[:established_date] = line[7]
+            # company_info[:listed_date] = line[8]
+            # company_info[:accounting_period] = line[9]
+            company_info[:description] = line[10]
+
+            company.update_attributes!(company_info)
           end
         end
         true

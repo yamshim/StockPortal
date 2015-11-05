@@ -1,3 +1,9 @@
+GIT
+  remote: git://github.com/mono0x/extractcontent.git
+  revision: 62ff7a67a0c8f75f7be395f543050294cbbd37ab
+  specs:
+    extractcontent (0.0.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -201,6 +207,7 @@ DEPENDENCIES
   capistrano-rbenv
   capistrano3-unicorn
   execjs (~> 2.6.0)
+  extractcontent!
   fluent-logger (~> 0.4.9)
   gmail (= 0.6.0)
   jquery-rails (= 4.0.5)

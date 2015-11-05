@@ -65,15 +65,20 @@ module AllUtils
   end
 
   def trim_to_date(str)
-    Date.new(*str.split(/[^0-9]/).map{|char| char.to_i})
+    ary = str.to_s.split(/[^0-9]/).map{|char| char.to_i}
+    if ary.size == 3
+      Date.new(*ary)
+    else
+      nil
+    end
   end
 
   def send_logger_mail(hash)
-    gmail = Gmail.connect('akasatana.log@gmail.com', 'yamshim05')
+    gmail = Gmail.connect(ENV['LOGGER_MAIL_ADRESS'], ENV['LOGGER_MAIL_PASSWORD'])
     gmail.deliver do
       body_encoding = 'UTF-8'
       charset = 'UTF-8'
-      to 'akasatana.log@gmail.com'
+      to ENV['LOGGER_MAIL_ADRESS']
       subject hash[:action]
       text_part do
         body hash

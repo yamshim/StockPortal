@@ -4,6 +4,6 @@ class Company < ActiveRecord::Base
   has_and_belongs_to_many :tags
   has_and_belongs_to_many :articles
 
-  validates :company_code, :name, :industry_code, :market_code, presence: true
+  validates :company_code, :name, :industry_code, presence: true
   validates :company_code, uniqueness: true
 end

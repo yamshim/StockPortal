@@ -31,9 +31,9 @@ staging:
 production:
   adapter:  mysql2
   encoding: utf8
-  database: stock_portal
-  username: akasatana
-  password: yamshim05
-  host:     localhost
+  database: ENV['DB_NAME']
+  username: ENV['DB_USER_NAME']
+  password: ENV['DB_PASSWORD']
+  host:     ENV['DB_HOST']
   # sslca:     <%= "#{Rails.root}/config/keys/rds-mysql-ssl-ca-cert.pem" %>
   reconnect: true

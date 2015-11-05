@@ -10,6 +10,7 @@ gem 'whenever', require: false
 gem 'pdf-reader'
 gem 'unicorn', '4.9.0'
 gem 'gmail', '0.6.0'
+gem 'extractcontent', github: 'mono0x/extractcontent'
 
 # for Logger
 gem 'ltsv'

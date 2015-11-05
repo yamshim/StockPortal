@@ -19,27 +19,27 @@ trend_patrol="#{rails_runner} Clawler::Models::Trend.patrol"
 #   command "#{article_patrol}"
 # end
 
-every :day, at: '19:00' do
+every :day, at: '21:40' do
   command "#{bracket_patrol}"
 end
 
-every :day, at: '19:15' do
+every :day, at: '08:50' do
   command "#{commodity_patrol}"
 end
 
-every :day, at: '19:30' do
+every :day, at: '22:00' do
   command "#{company_patrol}"
 end
 
-every :day, at: '19:45' do
+every [:wednesday], at: '22:00' do
   command "#{credit_deal_patrol}"
 end
 
-every :day, at: '20:00' do
+every :day, at: '21:50' do
   command "#{foreign_exchange_patrol}"
 end
 
-every :day, at: '20:15' do
+every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '22:20' do
   command "#{transaction_patrol}"
 end
 
