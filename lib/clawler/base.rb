@@ -32,16 +32,16 @@ module Clawler
               case result[:type]
               when :break
                 obj_lines = uniq_lines(obj_lines)
-                @lines = (@lines || []) + obj_lines
                 break
               when :next
                 next
               when :part
                 obj_lines = obj_lines + result[:lines]
+                @lines = (@lines || []) + result[:lines]
               when :all
                 obj_lines = obj_lines + result[:lines]
+                @lines = (@lines || []) + result[:lines]
                 obj_lines = uniq_lines(obj_lines)
-                @lines = (@lines || []) + obj_lines
                 break
               end
             end
