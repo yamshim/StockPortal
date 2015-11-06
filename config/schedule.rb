@@ -5,6 +5,7 @@ log_path = current_path + '/log/cron.log'
 error_log_path = current_path + '/log/cron_error.log'
 set :output, { :standard => log_path, :error => error_log_path}
 
+cd_path="cd #{current_path}"
 rails_runner="bundle exec rails runner -e production"
 
 article_patrol="#{rails_runner} Clawler::Models::Article.patrol"
@@ -18,39 +19,39 @@ transaction_peel="#{rails_runner} Clawler::Models::Transaction.peel"
 trend_patrol="#{rails_runner} Clawler::Models::Trend.patrol"
 
 # every :day, at: '00:30' do
-#   command "#{article_patrol}"
+#   command "#{cd_path} && #{article_patrol}"
 # end
 
 every :day, at: '21:40' do
-  command "#{bracket_patrol}"
+  command "#{cd_path} && #{bracket_patrol}"
 end
 
 every :day, at: '08:50' do
-  command "#{commodity_patrol}"
+  command "#{cd_path} && #{commodity_patrol}"
 end
 
 every :day, at: '22:00' do
-  command "#{company_patrol}"
+  command "#{cd_path} && #{company_patrol}"
 end
 
 every [:wednesday], at: '22:20' do
-  command "#{credit_deal_patrol}"
+  command "#{cd_path} && #{credit_deal_patrol}"
 end
 
 every :day, at: '21:50' do
-  command "#{foreign_exchange_patrol}"
+  command "#{cd_path} && #{foreign_exchange_patrol}"
 end
 
 every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '22:40' do
-  command "#{transaction_patrol}"
+  command "#{cd_path} && #{transaction_patrol}"
 end
 
 every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '16:00' do
-  command "#{transaction_peel}"
+  command "#{cd_path} && #{transaction_peel}"
 end
 
 every :day, at: '00:05' do
-  command "#{trend_patrol}"
+  command "#{cd_path} && #{trend_patrol}"
 end
 
 # Learn more: http://github.com/javan/whenever
