@@ -60,7 +60,7 @@ module Clawler
           end
           article_lines += lines
         end
-        (article_lines[-1] == last_line) ? nil : article_lines
+        (article_lines.empty? || (article_lines[-1][2] == last_line[2]) || (article_lines.size < 5)) ? nil : article_lines
       end
 
       def self.get_trend_url
