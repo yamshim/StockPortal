@@ -1,6 +1,8 @@
 
-log_path = 'log/cron.log'
-error_log_path = 'log/cron_error.log'
+current_path = '/var/www/StockPortal/current'
+
+log_path = current_path + '/log/cron.log'
+error_log_path = current_path + '/log/cron_error.log'
 set :output, { :standard => log_path, :error => error_log_path}
 
 rails_runner="bundle exec rails runner -e production"
@@ -31,7 +33,7 @@ every :day, at: '22:00' do
   command "#{company_patrol}"
 end
 
-every [:wednesday], at: '22:00' do
+every [:wednesday], at: '22:20' do
   command "#{credit_deal_patrol}"
 end
 
@@ -39,7 +41,7 @@ every :day, at: '21:50' do
   command "#{foreign_exchange_patrol}"
 end
 
-every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '22:20' do
+every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '22:40' do
   command "#{transaction_patrol}"
 end
 
