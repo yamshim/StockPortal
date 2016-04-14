@@ -7,7 +7,7 @@ module Clawler
       extend Clawler::Utils
 
       def self.home_url
-        'https://www.sbisec.co.jp/ETGate'
+        'https://www.sbisec.co.jp/ETGate/'
       end
 
       def self.get_chart(company_code, file_name, driver, watch)
@@ -19,7 +19,7 @@ module Clawler
         watch.until{e1.find_element(tag_name: 'a')}.click
         sleep(0.5)
 
-        return nil if watch.until{driver.find_elements(tag_name: 'table')[1]}.text == '対象銘柄はありません。または、表示できません。'
+        return nil if watch.until{driver.find_elements(tag_name: 'table')[1]}.text =~ /対象銘柄はありません。/
         watch.until{driver.find_element(link_text: '詳細チャートへ')}.click
         sleep(0.5)
 

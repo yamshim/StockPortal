@@ -38,7 +38,6 @@ module Clawler
 
       def scrape
         super(self.method(:each_scrape))
-        @driver.quit
       end
 
       def import

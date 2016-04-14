@@ -73,7 +73,7 @@ ja:
 
     tag_type:
       category: 'カテゴリー'
-      trend: 'トレンド'
+      parse: 'パース'
       alias: 'エイリアス'
       ignore: '無視'
 

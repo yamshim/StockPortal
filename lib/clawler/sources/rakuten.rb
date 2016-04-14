@@ -6,8 +6,16 @@ module Clawler
       extend AllUtils
       extend Clawler::Utils
 
+      def self.home_url
+        'https://www.rakuten-sec.co.jp'
+      end
+
+      def self.iframe_url
+        'https://www.trkd-asia.com/rakutensec'
+      end
+
       def self.get_industry_url(industry_code, page)
-        "https://www.trkd-asia.com/rakutensec/result_ja.jsp?name=&code=&all=on&sector=#{csym(:industry, industry_code).to_s.upcase}&pageNo=#{page}"
+        iframe_url + "/result_ja.jsp?name=&code=&all=on&sector=#{csym(:industry, industry_code).to_s.upcase}&pageNo=#{page}"
       end
 
       def self.get_company_headers(industry_code, page)
@@ -44,28 +52,28 @@ module Clawler
       end
 
       def self.get_company_url(company_code)
-        "https://www.trkd-asia.com/rakutensec/quote.jsp?ric=#{company_code}&c=ja&ind=2"
+        iframe_url + "/quote.jsp?ric=#{company_code}&c=ja&ind=2"
       end
 
       def self.get_market_code(market_name)
         case market_name
-        when "東証1部"
+        when '東証1部'
           c(:market, :t_1)
-        when "東証2部"
+        when '東証2部'
           c(:market, :t_2)
-        when "JQ G"
+        when 'JQ'
           c(:market, :t_js)
-        when "ＪＱＧ"
+        when 'JQ G'
           c(:market, :t_jg)
-        when "マザーズ"
+        when 'マザーズ'
           c(:market, :t_m)
-        when "東証外国部"
+        when '東証外国部'
           c(:market, :t_f)
-        when "名証１部"
+        when '名証１部'
           c(:market, :m_1)
-        when "名証２部"
+        when '名証２部'
           c(:market, :m_2)
-        when "名証セントレックス"
+        when '名証セントレックス'
           c(:market, :m_c)
         else
           nil

@@ -7,17 +7,17 @@ module Clawler
       extend Clawler::Utils
 
       def self.home_url
-        'http://www.google.co.jp'
+        'https://www.google.co.jp'
       end
 
       def self.get_articles_url(word, page)
         case rand(3)
         when 0
-          "https://www.google.co.jp/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&hl=ja&gl=jp&authuser=0&tbm=nws&start=#{(page - 1) * 10}"
+          home_url + "/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&hl=ja&gl=jp&authuser=0&tbm=nws&start=#{(page - 1) * 10}"
         when 1
-          "https://www.google.co.jp/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&start=#{(page - 1) * 10}"
+          home_url + "/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&start=#{(page - 1) * 10}"
         when 2
-          "https://www.google.co.jp/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&oq=#{URI.encode(word)}&start=#{(page - 1) * 10}"
+          home_url + "/search?hl=ja&gl=jp&tbm=nws&authuser=0&q=#{URI.encode(word)}&oq=#{URI.encode(word)}&start=#{(page - 1) * 10}"
         end
       end
 

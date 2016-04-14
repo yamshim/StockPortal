@@ -71,7 +71,7 @@ trend_source:
 
 tag_type:
   category: 0
-  trend: 1
+  parse: 1
   alias: 2
   ignore: 3
 

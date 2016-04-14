@@ -44,7 +44,7 @@ module Clawler
 
       def scrape
         super(self.method(:each_scrape))
-        write_proxies
+        # write_proxies
       end
 
       def import
@@ -71,7 +71,7 @@ module Clawler
             return {type: :part, lines: article_lines}
           end
         elsif @status == :patrol
-          if page == 3
+          if page == 7
             return {type: :all, lines: article_lines}
           else
             return {type: :part, lines: article_lines}
@@ -147,7 +147,6 @@ module Clawler
 
       def update_import
         companies = ::Company.all
-        articles = ::Article.where(description: nil)
 
         companies.each do |company|
           ::Company.transaction do
@@ -161,12 +160,12 @@ module Clawler
                   html = io.read.toutf8
                   article_info[:description], article_info[:title] = ExtractContent.analyse(html)
                 end
-              rescue
+              rescue => ex
                 #  OpenURI::HTTPError, RuntimeError => ex
                 next # 404 Not Found のとき飛ばす あとhttp->httpsのredirect
               end
-              next if article_info[:title].blank?
-              article_info[:description] = nil if article_info[:description].blank?
+              article_info[:title] = article.title if article_info[:title].blank?
+              article_info[:description] = article.description if article_info[:description].blank?
 
               article_line = [company.name, article_info[:title], article.url, article.source, article.date, article_info[:description]]
               article_lines << article_line

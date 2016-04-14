@@ -11,7 +11,7 @@ module Clawler
       end
 
       def self.get_brackets_url(identifier, page)
-        "http://minkabu.jp/stock/#{identifier}/timeline?fp=#{page}#fourvalue"
+        home_url + "/stock/#{identifier}/timeline?fp=#{page}#fourvalue"
       end
 
       def self.get_brackets_info(identifier, page)

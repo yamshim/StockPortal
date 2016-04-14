@@ -14,7 +14,7 @@ module Clawler
       # ---company---
 
       def self.get_industry_url(industry_code, page)
-        "http://kabutan.jp/themes/?industry=#{industry_code + 1}&market=0&stc=&stm=0&page=#{page}"
+        home_url + "/themes/?industry=#{industry_code + 1}&market=0&stc=&stm=0&page=#{page}"
       end
 
       def self.get_company_codes(industry_code, page)

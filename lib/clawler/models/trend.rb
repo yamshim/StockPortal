@@ -62,7 +62,7 @@ module Clawler
           if @status == :patrol && @cut_obj.present?
             return {type: :all, lines: trend_lines} if @cut_obj >= date
           end
-          words = Clawler::Sources::Yahoo.get_words(texts)
+          words = Clawler::Sources::Yahoo.get_words(texts) # get_trend_linesにして[date, words]を返したほうがいい
           trend_lines << [date, words]
         end
         return {type: :part, lines: trend_lines}
@@ -85,7 +85,7 @@ module Clawler
 
       def line_import
         ::Trend.transaction do
-          existing_tags = ::Tag.where(tag_type: c(:tag_type, :trend)).pluck(:name)
+          existing_tags = ::Tag.where(tag_type: c(:tag_type, :parse)).pluck(:name)
           last_date = ::Trend.pluck(:date).try(:sort).try(:last)
 
           @lines.sort_by{|line| line[0]}.reverse.each do |line|
@@ -97,20 +97,21 @@ module Clawler
             line[1..-1].each do |li|
               if existing_tags.include?(li)
                 trend.tags << ::Tag.find_by_name(li)
-                trend.save!
               else
-                trend.tags << ::Tag.new({name: li, tag_type: c(:tag_type, :trend)})
-                trend.save!
+                tag = ::Tag.new({name: li, tag_type: c(:tag_type, :parse)})
+                trend.tags << tag
+                tag.save!
                 existing_tags << li
               end
             end
+            trend.save!
           end
         end
         true
       end
 
       def csv_import
-        existing_tags = ::Tag.where(tag_type: c(:tag_type, :trend)).try(:pluck, :name)
+        existing_tags = ::Tag.where(tag_type: c(:tag_type, :parse)).try(:pluck, :name)
         last_date = ::Trend.pluck(:date).try(:sort).try(:last)
 
         cvals(:trend_source).each do |source|
@@ -129,7 +130,7 @@ module Clawler
                   trend.tags << ::Tag.find_by_name(li)
                   trend.save!
                 else
-                  trend.tags << ::Tag.new({name: li, tag_type: c(:tag_type, :trend)})
+                  trend.tags << ::Tag.new({name: li, tag_type: c(:tag_type, :parse)})
                   trend.save!
                   existing_tags << li
                 end

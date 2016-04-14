@@ -8,6 +8,7 @@ module Clawler
     def initialize(model_type, status, driver=nil)
       @model_type = model_type
       @status = status
+      @error_status = {}
       set_proxies
       if driver
         set_selenium
@@ -17,7 +18,6 @@ module Clawler
     def scrape(each_scrape)
       objs = iterate_objs
       set = 0
-      error = {}
       @lines = []
 
       CLAWL_LOGGER.info(action: "SCRAPE=#{@model_type}##{@status}=START")
@@ -54,27 +54,24 @@ module Clawler
             set += 1 # 上記の処理が全て成功していたらカウント
           end
         rescue => ex
-          if error[:error_name] == ex.class.name && error[:error_message] == ex.message && error[:error_backtrace] == ex.backtrace[0]
-            error[:error_count] += 1
-            if error[:error_count] >= 10
-              @driver.quit unless @driver.nil?
-              CLAWL_LOGGER.info(error)
-              send_logger_mail(error)
-              exit
-            end
-          else
-            error[:action] = "SCRAPE=#{@model_type}##{@status}=EXIT"
-            error[:error_name] = ex.class.name
-            error[:error_message] = ex.message
-            error[:error_backtrace] = ex.backtrace[0]
-            error[:error_file] = __FILE__
-            error[:error_line] = __LINE__
-            error[:error_count] = 1
+          @error_status[:error_count] = (@error_status[:error_count].blank? ? 1 : @error_status[:error_count] + 1)
+          if (@error_status[:error_count] % 10 == 0) && (@error_status[:error_count] <= 100)
+            set_error_status(ex, :scrape, :error)
+            CLAWL_LOGGER.info(@error_status)
+            send_logger_mail(@error_status)
+            sleep(600)
+          elsif (@error_status[:error_count] > 1000) || (ex.message =~ /ToExit/)
+            set_error_status(ex, :scrape, :exit)
+            @driver.quit unless @driver.nil?
+            CLAWL_LOGGER.info(@error_status)
+            send_logger_mail(@error_status)
+            exit
           end
         end
         break if set == objs.size
       end
       CLAWL_LOGGER.info(action: "SCRAPE=#{@model_type}##{@status}=END")
+      @driver.quit unless @driver.nil?
 
       @lines
     end
@@ -82,19 +79,19 @@ module Clawler
     def iterate_objs
       case @model_type
       when :company
-        cvals(:industry)
+        cvals(:industry).sort
       when :transaction, :credit_deal
-        Company.pluck(:company_code)
+        Company.pluck(:company_code).sort
       when :foreign_exchange
-        cvals(:currency)
+        cvals(:currency).sort
       when :article
-        Company.pluck(:name)
+        Company.pluck(:company_code, :name).sort_by{|c| c[0]}.map{|c| c[1]}
       when :bracket
-        cvals(:bracket)
+        cvals(:bracket).sort
       when :trend
-        cvals(:trend_source)
+        cvals(:trend_source).sort
       when :commodity
-        cvals(:commodity)
+        cvals(:commodity).sort
       end
     end
 
@@ -103,16 +100,9 @@ module Clawler
       each_import.call
       CLAWL_LOGGER.info(action: "IMPORT=#{@model_type}##{@status}=END")
     rescue => ex
-      error = {}
-      error[:action] = "IMPORT=#{@model_type}##{@status}=EXIT"
-      error[:error_name] = ex.class.name
-      error[:error_message] = ex.message
-      error[:error_backtrace] = ex.backtrace[0]
-      error[:error_file] = __FILE__
-      error[:error_line] = __LINE__
-      error[:error_count] = 1
-      CLAWL_LOGGER.info(error)
-      send_logger_mail(error) # ここでexceptionが起こったら？
+      set_error_status(ex, :import, :exit)
+      CLAWL_LOGGER.info(@error_status)
+      send_logger_mail(@error_status) # ここでexceptionが起こったら？
       exit
     end
 
@@ -207,7 +197,15 @@ module Clawler
     def set_selenium
       capabilities = Selenium::WebDriver::Remote::Capabilities.phantomjs('phantomjs.page.settings.userAgent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11')
       @driver = ::Selenium::WebDriver.for(:phantomjs, :desired_capabilities => capabilities)
-      @watch = ::Selenium::WebDriver::Wait.new(timeout: 5)
+      @watch = ::Selenium::WebDriver::Wait.new(timeout: 10)
+    end
+
+    def set_error_status(ex, method, type)
+      @error_status = {}
+      @error_status[:action] = "#{method.to_s.upcase}=#{@model_type}##{@status}=#{type.to_s.upcase}"
+      @error_status[:error_name] = ex.class.name
+      @error_status[:error_message] = ex.message
+      @error_status[:error_backtrace] = ex.backtrace[0]
     end
 
   end

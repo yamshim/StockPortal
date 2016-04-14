@@ -45,7 +45,6 @@ module Clawler
       def scrape
         if @status == :peel
           super(self.method(:chart_scrape))
-          @driver.quit
         else
           super(self.method(:each_scrape))
         end
@@ -144,7 +143,19 @@ module Clawler
       def chart_scrape(company_code, page)
         dir_name = "#{Rails.root}/public/images/#{Rails.env}/chart/#{company_code}" # 後で変更
         FileUtils.mkdir_p(dir_name) unless File.exists?(dir_name)
-        file_name = dir_name + "/#{Date.today}.jpg"
+
+        now_time = Time.now
+        now_date = now_time.to_date
+        former_range = (Time.new(*[now_date.year, now_date.month, now_date.day, 15, 30, 00, '+09:00'])..Time.new(*[now_date.year, now_date.month, now_date.day, 23, 59, 59, '+09:00']))
+        latter_range = (Time.new(*[now_date.year, now_date.month, now_date.day, 00, 00, 00, '+09:00'])..Time.new(*[now_date.year, now_date.month, now_date.day, 8, 49, 59, '+09:00']))
+        if former_range.cover?(now_time)
+          file_name = dir_name + "/#{now_date}.jpg"
+        elsif latter_range.cover?(now_time)
+          file_name = dir_name + "/#{now_date - 1}.jpg"
+        else
+          raise 'ToExit:PeelTimeOver'
+        end
+
         unless File.size?(file_name)
           Clawler::Sources::Sbi.get_chart(company_code, file_name, @driver, @watch)
         end

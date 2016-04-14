@@ -11,7 +11,7 @@ module Clawler
       end
 
       def self.get_trends_url(page)
-        "http://www.nikkei.com/news/category/?bn=#{1 + (page - 1) * 20}"
+        home_url + "/news/category/?bn=#{1 + (page - 1) * 20}"
       end
 
       def self.get_urls(page)
@@ -28,7 +28,7 @@ module Clawler
         date = trim_to_date(url_doc.xpath('//dd[@class="cmnc-publish"]').text.split(' ')[0])
         texts = []
         text = ''
-        url_doc.xpath('//div[@class="cmn-article_text JSID_key_fonttxt"]/p').each do |p|
+        url_doc.xpath('//div[@class="cmn-article_text a-cf JSID_key_fonttxt"]/p').each do |p|
           p.children.each do |child|
             text += child.text.gsub(/\s/, '').gsub(/\/dx\/async\/.+/, '').gsub(/<!--.+-->/, '').gsub(/\(c\).+/, '').gsub(/〔.+〕/, '').gsub(/【.+】/, '')
             if text.bytesize > 500

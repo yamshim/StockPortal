@@ -17,7 +17,8 @@ class Segment
         doc = Nokogiri::HTML.parse(open("http://advance.quote.nomura.co.jp/meigara/nomura2/users/asp/bs_list5r.asp?KEY1=#{company_code}"), nil, 'utf-8')
         part_url = doc.xpath('//table[@class="def"]').css('td/a').select{|node| node.text !~ /第１四半期|第２四半期|第３四半期|訂正/}[0].attribute('href').value
         url = 'http://advance.quote.nomura.co.jp/meigara/nomura2/' + part_url.slice(/pdfdoc.+/)
-        reader = PDF::Reader.new(open(url))
+        reader = PDF::Reader.new(open(url, 'rb'))
+        binding.pry
 
         root_page_index = reader.pages.map.with_index{|page, index| index if page.text =~ /財務諸表に関する注記事項/}.compact.last
         seg_indexies = reader.pages[root_page_index..-1].map.with_index do |page, page_index|
