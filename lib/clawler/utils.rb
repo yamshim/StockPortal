@@ -9,9 +9,9 @@ module Clawler
     def get_content(url, interval)
       error = {}
       error[:error_count] = 0
-      wait(interval)
+      wait_interval(interval)
       begin
-        html = timeout(15){open(url, 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 15, :proxy => $proxy)}
+        html = timeout(10){open(url, 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 10, :proxy => $proxy)}
         charset = html.charset
         Nokogiri::HTML.parse(html, nil, charset) 
       rescue OpenURI::HTTPError => ex
@@ -53,7 +53,7 @@ module Clawler
       end
     end
 
-    def wait(interval)
+    def wait_interval(interval)
       case interval
       when :short
         sleep(0.0005)
@@ -73,11 +73,8 @@ module Clawler
     end
 
     def set_proxies
-      $proxies = get_proxies
-      doc = get_content('http://lab.magicvox.net/proxy/', :short)
-      $proxies += doc.xpath('//tr')[1..-1].map{|tr| 'http://' + tr.css('.host').text + ':' + tr.css('.port').text}
-      $proxies.uniq!
-      write_proxies
+      $proxies = read_proxies
+      $proxies.unshift(nil)
     end
 
     def change_proxy
@@ -86,14 +83,13 @@ module Clawler
       $proxy = $proxies.shift
     end
 
-    def get_proxies
+    def read_proxies
       csv_text = open("#{Rails.root}/db/seeds/csv/#{Rails.env}/proxies.csv", &:read).toutf8.strip
       proxies = CSV.parse(csv_text).flatten
       proxies
     end
 
-    def write_proxies
-      proxies = $proxies.unshift($proxy).compact
+    def write_proxies(proxies)
       CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/proxies.csv", 'wb') do |writer|
         writer << proxies
       end

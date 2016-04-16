@@ -41,16 +41,18 @@ module Clawler
               when :all
                 obj_lines = obj_lines + result[:lines]
                 @lines = (@lines || []) + result[:lines]
-                obj_lines = uniq_lines(obj_lines)
+                obj_lines = uniq_lines(obj_lines) # @linesはuniqされない？csv用の処理？必要？
                 break
               end
             end
             obj_lines = self.post_process(obj_lines) if @model_type == :trend
             @lines = [] if @status == :build
 
-            build_csv(obj_lines, obj) if @status == :build
-            add_csv(obj_lines, obj) if @status == :patrol
-            update_csv(obj_lines, obj) if @status == :update
+            unless @model_type == :proxy
+              build_csv(obj_lines, obj) if @status == :build
+              add_csv(obj_lines, obj) if @status == :patrol
+              update_csv(obj_lines, obj) if @status == :update
+            end
             set += 1 # 上記の処理が全て成功していたらカウント
           end
         rescue => ex
@@ -92,6 +94,8 @@ module Clawler
         cvals(:trend_source).sort
       when :commodity
         cvals(:commodity).sort
+      when :proxy
+        cvals(:proxy_source).sort
       end
     end
 
@@ -114,7 +118,8 @@ module Clawler
       when :patrol
         hash[:lines] = @lines[0..1]
       when :peel
-        hash[:attachment] = "#{Rails.root}/public/images/#{Rails.env}/chart/9501/#{Date.today}.jpg"
+        dir_name = "#{Rails.root}/public/images/#{Rails.env}/chart/9501/"
+        hash[:attachment] = dir_name + Dir::entries(dir_name)[-1]
       end
       CLAWL_LOGGER.info(hash)
       send_logger_mail(hash)
@@ -185,7 +190,7 @@ module Clawler
 
     def uniq_lines(lines)
       lines = case @model_type
-      when :trend
+      when :trend, :proxy
         lines
       when :company, :transaction, :credit_deal, :foreign_exchange, :bracket, :commodity
         lines.uniq{|line| line[1]}
@@ -197,7 +202,7 @@ module Clawler
     def set_selenium
       capabilities = Selenium::WebDriver::Remote::Capabilities.phantomjs('phantomjs.page.settings.userAgent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11')
       @driver = ::Selenium::WebDriver.for(:phantomjs, :desired_capabilities => capabilities)
-      @watch = ::Selenium::WebDriver::Wait.new(timeout: 10)
+      @wait = ::Selenium::WebDriver::Wait.new(timeout: 10)
     end
 
     def set_error_status(ex, method, type)

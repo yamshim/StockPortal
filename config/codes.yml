@@ -80,12 +80,8 @@ commodity:
   us_wheat: 1
   crude_oil: 2
 
-
-
-
-
-
-
-
-
+proxy_source:
+  getproxy: 0
+  cybersyndrome: 1
+  proxymoo: 2
 

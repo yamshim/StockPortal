@@ -5,7 +5,7 @@ require 'pry'
 
 def scrape
   driver = Selenium::WebDriver.for(:phantomjs)
-  watch = ::Selenium::WebDriver::Wait.new(timeout: 5)
+  wait = ::Selenium::WebDriver::Wait.new(timeout: 5)
 
   ["極洋", "日本水産", "マルハニチロ", "カネコ種苗", "サカタのタネ", "ホクト"].each do |word|
     ary = []
@@ -29,12 +29,12 @@ def scrape
         sleep(10)
 
         page_lines = []
-        es = watch.until{driver.find_elements(css: '.g')}
+        es = wait.until{driver.find_elements(css: '.g')}
         es.map do |e|
-          urls = watch.until{e.find_elements(tag_name: 'a')}.map{|a| a.attribute('href')}.uniq.reject{|url| url =~ /google/}
+          urls = wait.until{e.find_elements(tag_name: 'a')}.map{|a| a.attribute('href')}.uniq.reject{|url| url =~ /google/}
           lines = urls.map do |url|
-            title = watch.until{e.find_element(tag_name: 'h3')}.text
-            slp = watch.until{e.find_element(css: '.slp').find_elements(xpath: 'span')}
+            title = wait.until{e.find_element(tag_name: 'h3')}.text
+            slp = wait.until{e.find_element(css: '.slp').find_elements(xpath: 'span')}
             source = slp[0].text
             date = slp[-1].text # trim_to_date
             [title, url, source, date]
@@ -45,8 +45,8 @@ def scrape
         p page_lines
 
 
-        # e = watch.until{driver.find_element(id: "rcnt")}
-        # urls = watch.until{e.find_elements(tag_name: "a")}.map{|a| a.attribute('href')}.compact.uniq.reject{|url| url =~ /google.co.jp\/[search alert]/}.map{|url| url =~ /google.co.jp\/url/ ? CGI.parse(url)['url'][0] : url}.each{|url| p url}
+        # e = wait.until{driver.find_element(id: "rcnt")}
+        # urls = wait.until{e.find_elements(tag_name: "a")}.map{|a| a.attribute('href')}.compact.uniq.reject{|url| url =~ /google.co.jp\/[search alert]/}.map{|url| url =~ /google.co.jp\/url/ ? CGI.parse(url)['url'][0] : url}.each{|url| p url}
         # page_url = driver.current_url
         # titles_urls = urls.map do |url|
         #   driver.get(url)
@@ -55,7 +55,7 @@ def scrape
         # end
         # ary += titles_urls
         # driver.get(page_url)
-        break if (e = watch.until{driver.find_elements(link_text: '次へ')}[0]).nil?
+        break if (e = wait.until{driver.find_elements(link_text: '次へ')}[0]).nil?
       end
       p ary
     rescue => ex

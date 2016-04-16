@@ -51,7 +51,7 @@ module Clawler
 
       def each_scrape(commodity_code, page)
         commodity_lines = []
-        commodities_info = Clawler::Sources::Investing.get_commodities_info(csym(:commodity, commodity_code).to_s.gsub('_', '-'), @driver, @watch)
+        commodities_info = Clawler::Sources::Investing.get_commodities_info(csym(:commodity, commodity_code).to_s.gsub('_', '-'), @driver, @wait)
 
         commodities_info.each do |commodity_info|
           commodity_line = Clawler::Sources::Investing.get_commodity_line(commodity_info, commodity_code)

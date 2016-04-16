@@ -14,23 +14,23 @@ module Clawler
         home_url + "/commodities/#{commodity_name}-historical-data"
       end
 
-      def self.get_commodities_info(commodity_name, driver, watch)
+      def self.get_commodities_info(commodity_name, driver, wait)
         commodity_url = Clawler::Sources::Investing.get_commodity_url(commodity_name)
         driver.get(commodity_url)
         sleep(1)
 
-        watch.until{driver.find_element(id: 'mainPopUpContainer').find_element(class: 'bugCloseIcon')}.click unless driver.find_elements(id: 'mainPopUpContainer').size.zero?
+        wait.until{driver.find_element(id: 'mainPopUpContainer').find_element(class: 'bugCloseIcon')}.click unless driver.find_elements(id: 'mainPopUpContainer').size.zero?
         sleep(0.5)
 
         js_script = "document.getElementById('picker').setAttribute('value', '#{scrape_start_date.to_s.gsub('-', '/')} - #{scrape_end_date.to_s.gsub('-', '/')}')"
-        driver.execute_script(js_script) # watch.untilだめ
-        watch.until{driver.find_element(id: 'datePickerIconWrap')}.click
+        driver.execute_script(js_script) # wait.untilだめ
+        wait.until{driver.find_element(id: 'datePickerIconWrap')}.click
         sleep(0.5)
 
-        watch.until{driver.find_element(link_text: '適用')}.click
+        wait.until{driver.find_element(link_text: '適用')}.click
         select = ::Selenium::WebDriver::Support::Select.new(driver.find_element(:id, 'data_interval'))
         select.select_by(:index, 0)
-        commodities_info = watch.until{driver.find_element(id: 'curr_table').find_elements(css: 'tr')}[1..-1]
+        commodities_info = wait.until{driver.find_element(id: 'curr_table').find_elements(css: 'tr')}[1..-1]
         commodities_info
       end
 

@@ -157,7 +157,7 @@ module Clawler
         end
 
         unless File.size?(file_name)
-          Clawler::Sources::Sbi.get_chart(company_code, file_name, @driver, @watch)
+          Clawler::Sources::Sbi.get_chart(company_code, file_name, @driver, @wait)
         end
         return {type: :break, lines: nil}
       end

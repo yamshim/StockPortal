@@ -8,7 +8,7 @@ module Clawler
       EXTRACT_API_BASE_URL = 'http://jlp.yahooapis.jp/KeyphraseService/V1/extract'
 
       def self.home_url
-        'http://www.yahoo.co.jp/'
+        'http://www.yahoo.co.jp'
       end
 
       def self.finance_url
@@ -115,7 +115,7 @@ module Clawler
         texts.each do |text|
           params = "?appid=#{YAHOO_APP_ID}&sentence=#{URI.encode(text)}"
           url = EXTRACT_API_BASE_URL + params
-          wait(:short)
+          wait_interval(:short)
           response = open(url)
 
           doc = REXML::Document.new(response).elements['ResultSet/']

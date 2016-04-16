@@ -82,15 +82,8 @@ ja:
       us_wheat: '小麦先物'
       crude_oil: 'WTI原油先物'
 
-
-
-
-
-
-
-
-
-
-
-
+    proxy_source:
+      getproxy: 'getproxy'
+      cybersyndrome: 'cybersyndrome'
+      proxymoo: 'proxymoo'
 
