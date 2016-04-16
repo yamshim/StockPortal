@@ -31,7 +31,7 @@ module Clawler
         company_line << company_code # company_code
 
         company_info1, company_info2, company_info3 = get_company_info(company_code) 
-        company_line << company_info1[2] # name
+        company_line << company_info1[-1] # name
         company_line << get_market_code(company_info1[3]) # market_code
 
         if c(:industry, industry_code) =~ %r|#{company_info2[1].text.strip}|
@@ -49,13 +49,14 @@ module Clawler
         company_line << trim_to_date(company_info4[11]) # listed_date
         company_line << trim_to_i(company_info4[12]) # accounting_period
         company_line << (company_info3[1].text + '\n' + company_info4[1]) # description
+        binding.pry
         company_line
       end
 
       def self.get_company_info(company_code)
         company_url = get_company_url(company_code)
         company_doc = get_content(company_url, :middle)
-        company_info1 = company_doc.xpath('//table[@class="kobetsu_data_table1"]').css('tr')[0].text.gsub(/(\r\n)+/, '-').split('-')
+        company_info1 = company_doc.xpath('//table[@class="kobetsu_data_table1"]').css('tr')[0].text.gsub(/(\r\n)+/, '-').split('-') << company_doc.title.split(/\s/)[0]
         company_info2 = company_doc.xpath('//table[@class="kobetsu_data_table2"]').css('td')
         company_info3 = company_doc.xpath('//ul').css('dd')
         [company_info1, company_info2, company_info3]

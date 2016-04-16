@@ -11,43 +11,23 @@ module Clawler
       error[:error_count] = 0
       wait_interval(interval)
       begin
+        # $proxyの初値は必ずnil
         html = timeout(10){open(url, 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 10, :proxy => $proxy)}
         charset = html.charset
         Nokogiri::HTML.parse(html, nil, charset) 
-      rescue OpenURI::HTTPError => ex
-        # 503 Service Unavailable のとき
+      rescue => ex
         error[:error_count] += 1
-        if error[:error_count] % 100 == 0
+        if error[:error_count] % $proxy_size == 0
           error[:action] = "LOAD=#{$proxy}##{url}=ERROR"
           error[:error_name] = ex.class.name
           error[:error_message] = ex.message
           error[:error_backtrace] = ex.backtrace[0]
-          error[:error_file] = __FILE__
-          error[:error_line] = __LINE__
           error[:proxy] = $proxy
           error[:url] = url
           CLAWL_LOGGER.info(error)
           send_logger_mail(error)
-          sleep(300)
+          sleep(600)
         end
-        change_proxy
-        retry        
-      rescue => ex
-        error[:error_count] += 1
-        if error[:error_count] > 200
-          error[:action] = "LOAD=#{$proxy}##{url}=EXIT"
-          error[:error_name] = ex.class.name
-          error[:error_message] = ex.message
-          error[:error_backtrace] = ex.backtrace[0]
-          error[:error_file] = __FILE__
-          error[:error_line] = __LINE__
-          error[:proxy] = $proxy
-          error[:url] = url
-          CLAWL_LOGGER.info(error)
-          send_logger_mail(error)
-          exit
-        end
-        $proxy = nil
         change_proxy
         retry
       end
@@ -74,7 +54,7 @@ module Clawler
 
     def set_proxies
       $proxies = read_proxies
-      $proxies.unshift(nil)
+      $proxy_size = $proxies.size + 1 # nilも含めるため+1
     end
 
     def change_proxy

@@ -154,7 +154,7 @@ module Clawler
             articles = company.articles.where(description: nil)
             articles.each do |article|
               article_info = {}
-              sleep(0.1)
+              sleep(0.5)
               begin
                 open(article.url, 'rb:utf-8') do |io|
                   html = io.read.toutf8
