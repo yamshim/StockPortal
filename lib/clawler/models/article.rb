@@ -58,10 +58,11 @@ module Clawler
         end 
       end
 
-      def each_scrape(company_name, page)
+      def each_scrape(company_code, page)
         article_lines = []
+        company_name = ::Company.find_by_company_code(company_code).name # できれば毎回のSQL発行は避けたい
         articles_info = Clawler::Sources::Google.get_articles_info(company_name, page)
-        article_lines = Clawler::Sources::Google.get_article_lines(articles_info, company_name, @lines[-1])
+        article_lines = Clawler::Sources::Google.get_article_lines(articles_info, company_code, @lines[-1])
         return {type: :break, lines: nil} if article_lines.blank?
 
         if @status == :build
@@ -83,10 +84,10 @@ module Clawler
         companies = ::Company.all
         articles_url = ::Article.pluck(:url)
 
-        @lines.group_by{|random_line| random_line[0]}.each do |company_name, lines|
+        @lines.group_by{|random_line| random_line[0]}.each do |company_code, lines|
           ::Company.transaction do
             articles_info = []
-            company = companies.select{|c| c.name == company_name}[0]
+            company = companies.select{|c| c.company_code == company_code}[0]
 
             lines.each do |line|
               article_info = {}
@@ -119,7 +120,7 @@ module Clawler
         companies.each do |company|
           ::Company.transaction do
             articles_info = []
-            csv_text = get_csv_text(company.name)
+            csv_text = get_csv_text(company.company_code)
             lines = CSV.parse(csv_text).uniq
 
             lines.each do |line|
@@ -167,11 +168,11 @@ module Clawler
               article_info[:title] = article.title if article_info[:title].blank?
               article_info[:description] = article.description if article_info[:description].blank?
 
-              article_line = [company.name, article_info[:title], article.url, article.source, article.date, article_info[:description]]
+              article_line = [company.company_code, article_info[:title], article.url, article.source, article.date, article_info[:description]]
               article_lines << article_line
               article.update_attributes!(article_info)
             end
-            update_csv(article_lines, company.name)
+            update_csv(article_lines, company.company_code)
           end
         end
         true

@@ -28,7 +28,7 @@ module Clawler
         articles_info
       end
 
-      def self.get_article_lines(articles_info, company_name, last_line)
+      def self.get_article_lines(articles_info, company_code, last_line)
         article_lines = []
         articles_info.each do |line|
           # 完全に拾えないlineがある
@@ -56,7 +56,7 @@ module Clawler
 
           article_urls = line.css('a').map{|a| a.attribute('href').value}.uniq.reject{|url| url =~ /google/}
           lines = article_urls.map do |article_url|
-            [company_name, article_title, article_url, article_source, article_date]
+            [company_code, article_title, article_url, article_source, article_date]
           end
           article_lines += lines
         end

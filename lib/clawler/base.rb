@@ -82,12 +82,10 @@ module Clawler
       case @model_type
       when :company
         cvals(:industry).sort
-      when :transaction, :credit_deal
+      when :transaction, :credit_deal, :article
         Company.pluck(:company_code).sort
       when :foreign_exchange
         cvals(:currency).sort
-      when :article
-        Company.pluck(:company_code, :name).sort_by{|c| c[0]}.map{|c| c[1]}
       when :bracket
         cvals(:bracket).sort
       when :trend
