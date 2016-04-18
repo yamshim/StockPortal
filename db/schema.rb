@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160417083317) do
+ActiveRecord::Schema.define(version: 20160418041942) do
 
   create_table "articles", force: :cascade do |t|
     t.string   "title",       limit: 255
@@ -22,8 +22,6 @@ ActiveRecord::Schema.define(version: 20160417083317) do
     t.datetime "updated_at",                null: false
     t.text     "description", limit: 65535
   end
-
-  add_index "articles", ["url"], name: "index_articles_on_url", unique: true, length: {"url"=>255}, using: :btree
 
   create_table "articles_companies", force: :cascade do |t|
     t.integer "article_id", limit: 4

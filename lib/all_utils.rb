@@ -74,18 +74,20 @@ module AllUtils
   end
 
   def send_logger_mail(hash)
-    gmail = Gmail.connect(ENV['LOGGER_MAIL_ADRESS'], ENV['LOGGER_MAIL_PASSWORD'])
-    gmail.deliver do
-      body_encoding = 'UTF-8'
-      charset = 'UTF-8'
-      to ENV['LOGGER_MAIL_ADRESS']
-      subject hash[:action]
-      text_part do
-        body hash
+    if Rails.env.production?
+      gmail = Gmail.connect(ENV['LOGGER_MAIL_ADRESS'], ENV['LOGGER_MAIL_PASSWORD'])
+      gmail.deliver do
+        body_encoding = 'UTF-8'
+        charset = 'UTF-8'
+        to ENV['LOGGER_MAIL_ADRESS']
+        subject hash[:action]
+        text_part do
+          body hash
+        end
+        add_file hash[:attachment] if hash[:attachment].present?
       end
-      add_file hash[:attachment] if hash[:attachment].present?
+      gmail.logout
     end
-    gmail.logout
   end
 
 end
