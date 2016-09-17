@@ -49,7 +49,6 @@ module Clawler
         company_line << trim_to_date(company_info4[11]) # listed_date
         company_line << trim_to_i(company_info4[12]) # accounting_period
         company_line << (company_info3[1].text + '\n' + company_info4[1]) # description
-        binding.pry
         company_line
       end
 

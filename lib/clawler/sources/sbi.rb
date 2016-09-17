@@ -12,12 +12,12 @@ module Clawler
 
       def self.get_chart(company_code, file_name, driver, wait)
         driver.get(home_url)
-        sleep(0.5)
+        sleep(1)
 
         e1 = wait.until{driver.find_element(id: 'srchK')}
         wait.until{e1.find_element(id: 'top_stock_sec')}.send_keys(company_code.to_s)
         wait.until{e1.find_element(tag_name: 'a')}.click
-        sleep(0.5)
+        sleep(1)
 
         return nil if wait.until{driver.find_elements(tag_name: 'table')[1]}.text =~ /対象銘柄はありません。/
         wait.until{driver.find_element(link_text: '詳細チャートへ')}.click

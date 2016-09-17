@@ -120,6 +120,7 @@ module Clawler
         companies.each do |company|
           ::Company.transaction do
             articles_info = []
+            company_articles_url = company.articles.pluck(:url)
             csv_text = get_csv_text(company.company_code)
             lines = CSV.parse(csv_text).uniq
 
@@ -131,9 +132,10 @@ module Clawler
               article_info[:date] = trim_to_date(line[4])
 
               if articles_url.include?(article_info[:url])
-                unless company.articles.pluck(:url).include?(article_info[:url])
+                unless company_articles_url.include?(article_info[:url])
                   company.articles << ::Article.find_by_url(article_info[:url])
                   company.save!
+                  company_articles_url << article_info[:url]
                 end
               else
                 company.articles << ::Article.new(article_info)

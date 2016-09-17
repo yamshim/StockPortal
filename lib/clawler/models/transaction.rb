@@ -153,7 +153,7 @@ module Clawler
         elsif latter_range.cover?(now_time)
           file_name = dir_name + "/#{now_date - 1}.jpg"
         else
-          raise 'ToExit:PeelTimeOver'
+          raise "ToExit:PeelTimeOver:#{now_time}"
         end
 
         unless File.size?(file_name)

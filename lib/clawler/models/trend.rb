@@ -58,7 +58,7 @@ module Clawler
         urls.each do |url|
           date, texts = Clawler::Sources::Nikkei.get_info(url)
 
-          next if date >= Date.today # 前日までの記事を対象にする 例えば25日の25時にクロールすることを前提にして25日までの記事をチェックするように
+          next if (date.blank? && texts.blank?) || (date >= Date.today) # 前日までの記事を対象にする 例えば25日の25時にクロールすることを前提にして25日までの記事をチェックするように
           if @status == :patrol && @cut_obj.present?
             return {type: :all, lines: trend_lines} if @cut_obj >= date
           end

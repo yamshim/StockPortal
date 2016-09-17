@@ -91,7 +91,7 @@ module Clawler
       when :trend
         cvals(:trend_source).sort
       when :commodity
-        cvals(:commodity).sort
+        cvals(:commodity).sort[0]
       when :proxy
         cvals(:proxy_source).sort
       end
@@ -117,7 +117,7 @@ module Clawler
         hash[:lines] = @lines[0..1]
       when :peel
         dir_name = "#{Rails.root}/public/images/#{Rails.env}/chart/9501/"
-        hash[:attachment] = dir_name + Dir::entries(dir_name)[-1]
+        hash[:attachment] = dir_name + Dir::entries(dir_name).sort[-1]
       end
       CLAWL_LOGGER.info(hash)
       send_logger_mail(hash)
@@ -155,6 +155,14 @@ module Clawler
       CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}/#{@model_type}_lines_#{obj}.csv", 'ab+') do |writer|
         lines.each do |line|
           writer << line
+        end
+      end
+
+      if @model_type == :article
+        CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}/tmp.csv", 'ab+') do |writer|
+          lines.each do |line|
+            writer << line
+          end
         end
       end
     end
