@@ -33,7 +33,7 @@ module Clawler
       end
 
       def set_cut_obj(commodity_code)
-        #@cut_obj = ::Commodity.where(commodity_code: commodity_code).try(:pluck, :date).try(:sort).try(:last)
+        @cut_obj = ::Commodity.where(commodity_code: commodity_code).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def scrape

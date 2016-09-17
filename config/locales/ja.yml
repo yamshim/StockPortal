@@ -87,3 +87,8 @@ ja:
       cybersyndrome: 'cybersyndrome'
       proxymoo: 'proxymoo'
 
+  active_record:
+    errors:
+      messages:
+        record_invalid: "%{errors}"
+

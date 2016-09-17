@@ -91,7 +91,7 @@ module Clawler
       when :trend
         cvals(:trend_source).sort
       when :commodity
-        cvals(:commodity).sort[0]
+        cvals(:commodity).sort
       when :proxy
         cvals(:proxy_source).sort
       end
