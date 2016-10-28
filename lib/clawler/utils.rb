@@ -53,6 +53,7 @@ module Clawler
     end
 
     def set_proxies
+      $proxy = nil
       $proxies = read_proxies
       $proxy_size = $proxies.size + 1 # nilも含めるため+1
     end

@@ -59,7 +59,7 @@ module Clawler
 
         @lines = @lines.map do |proxy|
           begin
-            html = timeout(10){open(Clawler::Sources::Kabutan.home_url, 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 10, :proxy => proxy)}
+            html = timeout(10){open('http://www.livedoor.com/', 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 10, :proxy => proxy)}
             html.class == Tempfile ? proxy : nil
           rescue => ex
             nil

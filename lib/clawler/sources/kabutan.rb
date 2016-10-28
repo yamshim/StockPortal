@@ -8,7 +8,7 @@ module Clawler
       EXCEPTIONAL_COMPANY_CODES = [8421, 8682]
 
       def self.home_url
-        'http://kabutan.jp'
+        'https://kabutan.jp'
       end
 
       # ---company---
