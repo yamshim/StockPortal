@@ -62,7 +62,7 @@ module Clawler
       end
 
       def self.get_company_url(company_code)
-        "http://kabutan.jp/stock/?code=#{company_code}"
+        "https://kabutan.jp/stock/?code=#{company_code}"
       end
 
       def self.get_market_code(market_name)

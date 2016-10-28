@@ -23,6 +23,7 @@ module Clawler
 
       def self.get_articles_info(company_name, page)
         articles_url = get_articles_url(company_name, page)
+        binding.pry
         articles_doc = get_content(articles_url, :long)
         articles_info = articles_doc.css('.g')
         articles_info
