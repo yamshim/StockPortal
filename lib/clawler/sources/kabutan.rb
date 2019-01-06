@@ -117,8 +117,8 @@ module Clawler
         transaction_info = []
         company_url = get_company_url(company_code)
         transaction_doc = get_content(company_url, :short)
-        date = transaction_doc.xpath('//div[@id="kobetsu_left"]/h2').css('time').attribute('datetime').value
-        return [nil, nil] if date != line_date.to_s
+        date = transaction_doc.xpath('//div[@id="kobetsu_left"]/h2').css('time').try(:first).try(:attribute, 'datetime').try(:value)
+        return [nil, nil] if ((date.nil?) || (date != line_date.to_s))
         transaction_info << trim_to_f(transaction_doc.xpath('//div[@id="kobetsu_left"]/table[2]').css('tr/td')[2].text.strip) # vwap
         transaction_info << trim_to_i(transaction_doc.xpath('//div[@id="kobetsu_left"]/table[2]').css('tr/td')[3].text.strip) # tick_count
         transaction_info
