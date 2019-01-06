@@ -23,40 +23,40 @@ trend_patrol="#{rails_runner} Clawler::Models::Trend.patrol"
 #   command "#{cd_path} && #{article_patrol}"
 # end
 
-every :day, at: '21:00' do
-  command "#{cd_path} && #{bracket_patrol}"
-end
+# every :day, at: '21:00' do
+#   command "#{cd_path} && #{bracket_patrol}"
+# end
 
-every :day, at: '08:55' do
-  command "#{cd_path} && #{commodity_patrol}"
-end
+# every :day, at: '08:55' do
+#   command "#{cd_path} && #{commodity_patrol}"
+# end
 
 every :day, at: '20:00' do
   command "#{cd_path} && #{company_patrol}"
 end
 
-every [:wednesday, :friday], at: '21:30' do
-  command "#{cd_path} && #{credit_deal_patrol}"
-end
+# every [:wednesday, :friday], at: '21:30' do
+#   command "#{cd_path} && #{credit_deal_patrol}"
+# end
 
-every :day, at: '22:00' do
-  command "#{cd_path} && #{foreign_exchange_patrol}"
-end
+# every :day, at: '22:00' do
+#   command "#{cd_path} && #{foreign_exchange_patrol}"
+# end
 
-every :day, at: '09:30' do
-  command "#{cd_path} && #{proxy_patrol}"
-end
+# every :day, at: '09:30' do
+#   command "#{cd_path} && #{proxy_patrol}"
+# end
 
 every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '20:30' do
   command "#{cd_path} && #{transaction_patrol}"
 end
 
-every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '15:40' do
-  command "#{cd_path} && #{transaction_peel}"
-end
+# every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '15:40' do
+#   command "#{cd_path} && #{transaction_peel}"
+# end
 
-every :day, at: '00:05' do
-  command "#{cd_path} && #{trend_patrol}"
-end
+# every :day, at: '00:05' do
+#   command "#{cd_path} && #{trend_patrol}"
+# end
 
 # Learn more: http://github.com/javan/whenever
