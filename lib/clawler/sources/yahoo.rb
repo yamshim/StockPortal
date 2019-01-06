@@ -89,8 +89,8 @@ module Clawler
         transaction_info = []
         transaction_url = get_transaction_url(company_code)
         transaction_doc = get_content(transaction_url, :short)
-        date_ary = transaction_doc.xpath('//div[@class="innerDate"]/div')[5].css('dd/span').text.split(/[^0-9]/)[1..-1].map(&:to_i)
-        return [nil] if date_ary != [line_date.month, line_date.day]
+        date_ary = transaction_doc.xpath('//div[@class="innerDate"]/div')[5].css('dd/span').text.split(/[^0-9]/)[1..-1].try(:map, &:to_i)
+        return [nil] if ((date_ary.nil?) || (date_ary != [line_date.month, line_date.day]))
         transaction_info << trim_to_i(transaction_doc.xpath('//div[@class="innerDate"]/div')[5].css('dd/strong').text.strip + '000')
         transaction_info
       end
