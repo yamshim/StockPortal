@@ -1,8 +1,9 @@
 # config valid only for Capistrano 3.1
-lock '3.2.1'
+lock '3.11.0'
 
 set :application, 'StockPortal'
-set :repo_url, 'https://github.com/yamshim/StockPortal.git'
+# set :repo_url, 'https://github.com/yamshim/StockPortal.git'
+set :repo_url, 'git@github.com:yamshim/StockPortal.git'
 set :deploy_to, '/var/www/StockPortal'
 set :keep_releases, 5
 

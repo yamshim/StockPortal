@@ -128,8 +128,8 @@ ActiveRecord::Schema.define(version: 20190106121400) do
     t.integer  "company_id",    limit: 4
     t.datetime "created_at",               null: false
     t.datetime "updated_at",               null: false
-    t.integer  "trading_value", limit: 4
     t.integer  "tick_count",    limit: 4
+    t.integer  "trading_value", limit: 4
   end
 
   add_index "transactions", ["company_id", "date"], name: "index_transactions_on_company_id_and_date", unique: true, using: :btree
