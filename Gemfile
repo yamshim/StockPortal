@@ -12,6 +12,8 @@ gem 'unicorn', '4.9.0'
 gem 'gmail', '0.6.0'
 gem 'extractcontent', github: 'mono0x/extractcontent'
 gem 'webdrivers', '2.4.0'
+gem 'nokogiri', '1.6.6.2'
+gem 'net-ssh', '3.0.1'
 
 # for Logger
 gem 'ltsv'
@@ -35,7 +37,7 @@ group :development, :test do
 end
 
 group :deployment do
-  gem 'capistrano', '~> 3.2.1'
+  gem 'capistrano'
   gem 'capistrano-rails'
   gem 'capistrano-rbenv'
   gem 'capistrano-bundler'
