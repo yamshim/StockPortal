@@ -8,7 +8,7 @@ module Clawler
     def initialize(model_type, status, driver=nil)
       @model_type = model_type
       @status = status
-      @error_status = {}
+      @error_info = {}
       set_proxies
       if driver
         set_selenium
@@ -20,14 +20,15 @@ module Clawler
       set = 0
       @lines = []
 
-      CLAWL_LOGGER.info(action: "SCRAPE=#{@model_type}##{@status}=START")
+      log_output(:scrape, :start) # startログ
       loop do
         begin
           objs[set..-1].each do |obj|
             obj_lines = []
             set_cut_obj(obj) if [:patrol, :update].include?(@status)
+
             (1..1000000).each do |page|
-              CLAWL_LOGGER.info({action: "SCRAPE=#{@model_type}##{@status}=PROGRESS", obj: obj, page: page, proxy: $proxy})
+              log_output(:scrape, :progress, obj, page) # progressログ
               result = each_scrape.call(obj, page)
               case result[:type]
               when :break
@@ -41,10 +42,12 @@ module Clawler
               when :all
                 obj_lines = obj_lines + result[:lines]
                 @lines = (@lines || []) + result[:lines]
-                obj_lines = uniq_lines(obj_lines) # @linesはuniqされない？csv用の処理？必要？
+                obj_lines = uniq_lines(obj_lines)
+                @lines = uniq_lines(@lines)
                 break
               end
             end
+
             obj_lines = self.post_process(obj_lines) if @model_type == :trend
             @lines = [] if @status == :build
 
@@ -56,29 +59,30 @@ module Clawler
             set += 1 # 上記の処理が全て成功していたらカウント
           end
         rescue => ex
-          @error_status[:error_count] = (@error_status[:error_count].blank? ? 1 : @error_status[:error_count] + 1)
-          if (@error_status[:error_count] % 10 == 0) && (@error_status[:error_count] <= 100)
-            set_error_status(ex, :scrape, :error)
-            CLAWL_LOGGER.info(@error_status)
-            send_logger_mail(@error_status)
-            sleep(600)
-          elsif (@error_status[:error_count] > 1000) || (ex.message =~ /ToExit/)
-            set_error_status(ex, :scrape, :exit)
+          @error_info[:error_count] = (@error_info[:error_count].blank? ? 1 : @error_info[:error_count] + 1)
+          if (@error_info[:error_count] % 10 == 0) && (@error_info[:error_count] <= 100)
+            set_error_info(ex)
+            log_output(:scrape, :error, nil, nil, @error_info) # errorログ
+            send_logger_mail(@error_info)
+            sleep(300)
+          elsif (@error_info[:error_count] > 1000) || (ex.message =~ /ToExit/)
+            set_error_info(ex)
+            log_output(:scrape, :error, nil, nil, @error_info) # errorログ
+            send_logger_mail(@error_info)
             @driver.quit unless @driver.nil?
-            CLAWL_LOGGER.info(@error_status)
-            send_logger_mail(@error_status)
             exit
           end
         end
         break if set == objs.size
       end
-      CLAWL_LOGGER.info(action: "SCRAPE=#{@model_type}##{@status}=END")
+      log_output(:scrape, :end) # endログ
       @driver.quit unless @driver.nil?
 
       @lines
     end
 
     def iterate_objs
+      # loop対象のオブジェクトをセット
       case @model_type
       when :company
         cvals(:industry).sort
@@ -102,9 +106,9 @@ module Clawler
       each_import.call
       CLAWL_LOGGER.info(action: "IMPORT=#{@model_type}##{@status}=END")
     rescue => ex
-      set_error_status(ex, :import, :exit)
-      CLAWL_LOGGER.info(@error_status)
-      send_logger_mail(@error_status) # ここでexceptionが起こったら？
+      set_error_info(ex, :import, :exit)
+      CLAWL_LOGGER.info(@error_info)
+      send_logger_mail(@error_info) # ここでexceptionが起こったら？
       exit
     end
 
@@ -211,12 +215,17 @@ module Clawler
       @wait = ::Selenium::WebDriver::Wait.new(timeout: 10)
     end
 
-    def set_error_status(ex, method, type)
-      @error_status = {}
-      @error_status[:action] = "#{method.to_s.upcase}=#{@model_type}##{@status}=#{type.to_s.upcase}"
-      @error_status[:error_name] = ex.class.name
-      @error_status[:error_message] = ex.message
-      @error_status[:error_backtrace] = ex.backtrace[0]
+    def set_error_info(ex)
+      @error_info[:error_name] = ex.class.name
+      @error_info[:error_message] = ex.message
+      @error_info[:error_backtrace] = ex.backtrace[0]
+    end
+
+    def log_output(method, action, obj=nil, page=nil, error_info=nil)
+      case action
+      when :start, :end, :progress, :error
+        CLAWL_LOGGER.info({model_type: @model_type, status: @status, method: method, action: action.to_s, obj: obj, page: page, proxy: $proxy, error_info: error_info})
+      end
     end
 
   end

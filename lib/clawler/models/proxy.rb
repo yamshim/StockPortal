@@ -39,11 +39,13 @@ module Clawler
       def each_scrape(source, page)
         proxy_lines = case csym(:proxy_source, source)
         when :getproxy
-          Clawler::Sources::Getproxy.get_proxy_lines(page, @driver, @wait)
+          #Clawler::Sources::Getproxy.get_proxy_lines(page, @driver, @wait)
+          []
         when :cybersyndrome
           Clawler::Sources::Cybersyndrome.get_proxy_lines(page, @driver, @wait)
         when :proxymoo
-          Clawler::Sources::Proxymoo.get_proxy_lines(page, @driver, @wait)
+          #Clawler::Sources::Proxymoo.get_proxy_lines(page, @driver, @wait)
+          []
         else
           []
         end

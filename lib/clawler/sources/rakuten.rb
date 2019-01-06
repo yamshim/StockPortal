@@ -56,6 +56,7 @@ module Clawler
       end
 
       def self.get_market_code(market_name)
+        # 札証や福証がない
         case market_name
         when '東証1部'
           c(:market, :t_1)

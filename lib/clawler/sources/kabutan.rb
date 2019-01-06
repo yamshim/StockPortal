@@ -25,40 +25,53 @@ module Clawler
       end
 
       def self.get_company_line(company_code, industry_code)
-        company_line = []
         return nil if EXCEPTIONAL_COMPANY_CODES.include?(company_code) # kabutanでは信金中央金庫は銀行業扱いだが除外
+        # company_line[0] = country_code
+        # company_line[1] = company_code
+        # company_line[2] = name
+        # company_line[3] = market_code
+        # company_line[4] = industry_code
+        # company_line[5] = trading_unit
+        # company_line[6] = url
+        # company_line[7] = established_data
+        # company_line[8] = listed_date
+        # company_line[9] = accounting_period
+        # company_line[10] = description
+        company_line = []
+        # kabutanでname, market_name, industry_name, trading_unit, url, descriptionを集める
+        company_info_kabutan = get_company_info(company_code)
         company_line << c(:country, :japan) # country_code
         company_line << company_code # company_code
-
-        company_info1, company_info2, company_info3 = get_company_info(company_code) 
-        company_line << company_info1[-1] # name
-        company_line << get_market_code(company_info1[3]) # market_code
-
-        if c(:industry, industry_code) =~ %r|#{company_info2[1].text.strip}|
+        company_line << company_info_kabutan[0] # name
+        company_line << get_market_code(company_info_kabutan[1]) # market_code
+        if c(:industry, industry_code) =~ %r|#{company_info_kabutan[2]}| # この可能性はあり得る？ industry_codeのバリデーション
           company_line << industry_code #industry_code
         else
           return nil
         end
-        company_line << trim_to_i(company_info2[2].text) # trading_unit
-
-        company_line << company_info3[0].text # url
+        company_line << trim_to_i(company_info_kabutan[3]) # trading_unit
+        company_line << company_info_kabutan[4] # url
                 
-        # yahooで基本情報を集める
-        company_info4 = Clawler::Sources::Yahoo.get_company_info(company_code)
-        company_line << trim_to_date(company_info4[9]) # established_data
-        company_line << trim_to_date(company_info4[11]) # listed_date
-        company_line << trim_to_i(company_info4[12]) # accounting_period
-        company_line << (company_info3[1].text + '\n' + company_info4[1]) # description
+        # yahooでstablished_date, listed_date, accounting_periodを集める
+        company_info_yahoo = Clawler::Sources::Yahoo.get_company_info(company_code)
+        company_line << trim_to_date(company_info_yahoo[0]) # established_data
+        company_line << trim_to_date(company_info_yahoo[1]) # listed_date
+        company_line << trim_to_i(company_info_yahoo[2]) # accounting_period
+        company_line << (company_info_kabutan[5] + '\n' + company_info_yahoo[3]) # description
         company_line
       end
 
       def self.get_company_info(company_code)
+        company_info = []
         company_url = get_company_url(company_code)
         company_doc = get_content(company_url, :middle)
-        company_info1 = company_doc.xpath('//table[@class="kobetsu_data_table1"]').css('tr')[0].text.gsub(/(\r\n)+/, '-').split('-') << company_doc.title.split(/\s/)[0]
-        company_info2 = company_doc.xpath('//table[@class="kobetsu_data_table2"]').css('td')
-        company_info3 = company_doc.xpath('//ul').css('dd')
-        [company_info1, company_info2, company_info3]
+        company_info << company_doc.title.split(/\s/)[0].strip # name
+        company_info << company_doc.xpath('//div[@id="stockinfo_i1"]').css('span[@class="market"]').text.strip # market_name
+        company_info << company_doc.xpath('//div[@id="stockinfo_i2"]').css('a').text.strip # industry_name
+        company_info << company_doc.xpath('//div[@id="stockinfo_i2"]').css('dd').text.strip # trading_unit
+        company_info += company_doc.xpath('//div[@class="company_block"]/table').css('td')[1..2].map{|td| td.text.strip} # url, description
+        themes = company_doc.xpath('//div[@class="company_block"]/table').css('td')[4].text.gsub(/(\s|\n)+/, '***').split('***')[1..-1] # 関連テーマ
+        company_info # ["ピアラ", "東証Ｍ", "サービス業", "100株", "https://piala.co.jp/", "電子商取引(EC)事業者向けに新規顧客獲得などの支援事業を展開する。"]
       end
 
       def self.get_company_url(company_code)
@@ -100,16 +113,15 @@ module Clawler
 
       # ---transaction---
 
-      def self.get_vwap(company_code)
+      def self.get_some_info(company_code, line_date)
+        transaction_info = []
         company_url = get_company_url(company_code)
-        company_doc = get_content(company_url, :short)
-        company_info = company_doc.xpath('//table[@class="stock_st_table"]/tr/td').map(&:text)
-        company_info.delete('')
-        if company_info[0].split(/[^0-9]/).map(&:to_i) == [Date.today.month, Date.today.day]
-          trim_to_f(company_info[18])
-        else
-          nil
-        end
+        transaction_doc = get_content(company_url, :short)
+        date = transaction_doc.xpath('//div[@id="kobetsu_left"]/h2').css('time').attribute('datetime').value
+        return [nil, nil] if date != line_date.to_s
+        transaction_info << trim_to_f(transaction_doc.xpath('//div[@id="kobetsu_left"]/table[2]').css('tr/td')[2].text.strip) # vwap
+        transaction_info << trim_to_i(transaction_doc.xpath('//div[@id="kobetsu_left"]/table[2]').css('tr/td')[3].text.strip) # tick_count
+        transaction_info
       end
 
     end

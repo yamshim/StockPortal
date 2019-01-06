@@ -192,6 +192,9 @@ GEM
       kgio (~> 2.6)
       rack
       raindrops (~> 0.7)
+    webdrivers (2.4.0)
+      nokogiri (~> 1.6)
+      rubyzip (~> 1.0)
     websocket (1.2.2)
     whenever (0.9.4)
       chronic (>= 0.6.3)
@@ -225,6 +228,7 @@ DEPENDENCIES
   therubyracer (~> 0.12.2)
   uglifier
   unicorn (= 4.9.0)
+  webdrivers (= 2.4.0)
   whenever
 
 BUNDLED WITH

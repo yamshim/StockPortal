@@ -65,8 +65,8 @@ module Clawler
 
         return {type: :break, lines: nil} if transactions_info.blank?
         
-        transactions_info.each do |transaction_info|
-          transaction_line = Clawler::Sources::Yahoo.get_transaction_line(transaction_info, company_code)
+        transactions_info.each_with_index do |transaction_info, index|
+          transaction_line = Clawler::Sources::Yahoo.get_transaction_line(transaction_info, company_code, page, index)
           next if transaction_line.nil?
 
           if @status == :patrol && @cut_obj.present?
@@ -100,6 +100,8 @@ module Clawler
               transaction_info[:closing_price] = line[5]
               transaction_info[:turnover] = line[6]
               transaction_info[:vwap] = line[7]
+              transaction_info[:tick_count] = line[8]
+              transaction_info[:trading_value] = line[9]
 
               transactions_info << transaction_info
             end
@@ -132,6 +134,8 @@ module Clawler
               transaction_info[:closing_price] = line[5].to_i
               transaction_info[:turnover] = line[6].to_i
               transaction_info[:vwap] = line[7].try(:to_f)
+              transaction_info[:tick_count] = line[8].try(:to_i)
+              transaction_info[:trading_value] = line[9].try(:to_i)
               transactions_info << transaction_info
             end
             company.transactions.build(transactions_info).each(&:save!)
