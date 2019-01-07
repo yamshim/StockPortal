@@ -57,7 +57,7 @@ module Clawler
               update_csv(obj_lines, obj) if @status == :update
             end
             set += 1 # 上記の処理が全て成功していたらカウント
-            if @lines.size >= 20000
+            if @lines.size >= 1000
               self.line_import # selfはClawler::Models::Transactionなどのインスタンス
               @lines = []
             end
