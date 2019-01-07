@@ -31,9 +31,9 @@ trend_patrol="#{rails_runner} Clawler::Models::Trend.patrol"
 #   command "#{cd_path} && #{commodity_patrol}"
 # end
 
-every :day, at: '20:00' do
-  command "#{cd_path} && #{company_patrol}"
-end
+# every :day, at: '20:00' do
+#   command "#{cd_path} && #{company_patrol}"
+# end
 
 # every [:wednesday, :friday], at: '21:30' do
 #   command "#{cd_path} && #{credit_deal_patrol}"
@@ -47,9 +47,9 @@ end
 #   command "#{cd_path} && #{proxy_patrol}"
 # end
 
-every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '20:30' do
-  command "#{cd_path} && #{transaction_patrol}"
-end
+# every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '20:30' do
+#   command "#{cd_path} && #{transaction_patrol}"
+# end
 
 # every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '15:40' do
 #   command "#{cd_path} && #{transaction_peel}"

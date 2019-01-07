@@ -12,8 +12,7 @@ module Clawler
       wait_interval(interval)
       begin
         # $proxyの初値は必ずnil
-        # html = timeout(10){open(url, 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 10, :proxy => $proxy)}
-        html = timeout(10){open(url, 'User-Agent' => 'Googlebot', :read_timeout => 10, :proxy => $proxy)}
+        html = timeout(10){open(url, 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 10, :proxy => $proxy)}
         charset = html.charset
         Nokogiri::HTML.parse(html, nil, charset) 
       rescue => ex

@@ -9,7 +9,7 @@ module Clawler
       @model_type = model_type
       @status = status
       @error_info = {}
-      set_proxies
+      # set_proxies
       if driver
         set_selenium
       end
