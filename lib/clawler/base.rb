@@ -27,7 +27,8 @@ module Clawler
             obj_lines = []
             set_cut_obj(obj) if [:patrol, :update].include?(@status)
 
-            (1..1000000).each do |page|
+            #(1..1000000).each do |page|
+            (1..22).each do |page|
               log_output(:scrape, :progress, obj, page) # progressログ
               result = each_scrape.call(obj, page)
               case result[:type]
@@ -57,7 +58,8 @@ module Clawler
               update_csv(obj_lines, obj) if @status == :update
             end
             set += 1 # 上記の処理が全て成功していたらカウント
-            if @lines.size >= 1000
+            binding.pry
+            if @lines.size >= 100
               CLAWL_LOGGER.info(action: "over1000")
               self.line_import # selfはClawler::Models::Transactionなどのインスタンス
               CLAWL_LOGGER.info(action: "import_success")
