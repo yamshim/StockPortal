@@ -58,7 +58,9 @@ module Clawler
             end
             set += 1 # 上記の処理が全て成功していたらカウント
             if @lines.size >= 1000
+              CLAWL_LOGGER.info(action: "over1000")
               self.line_import # selfはClawler::Models::Transactionなどのインスタンス
+              CLAWL_LOGGER.info(action: "import_success")
               @lines = []
             end
           end
