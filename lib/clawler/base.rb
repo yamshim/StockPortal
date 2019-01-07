@@ -57,6 +57,10 @@ module Clawler
               update_csv(obj_lines, obj) if @status == :update
             end
             set += 1 # 上記の処理が全て成功していたらカウント
+            if @lines.size >= 20000
+              self.line_import # selfはClawler::Models::Transactionなどのインスタンス
+              @lines = []
+            end
           end
         rescue => ex
           @error_info[:error_count] = (@error_info[:error_count].blank? ? 1 : @error_info[:error_count] + 1)
@@ -101,9 +105,9 @@ module Clawler
       end
     end
 
-    def import(each_import)
+    def import(line_import)
       CLAWL_LOGGER.info(action: "IMPORT=#{@model_type}##{@status}=START")
-      each_import.call
+      line_import.call
       CLAWL_LOGGER.info(action: "IMPORT=#{@model_type}##{@status}=END")
     rescue => ex
       set_error_info(ex, :import, :exit)
