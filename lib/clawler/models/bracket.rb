@@ -12,13 +12,6 @@ module Clawler
       # 重複データの保存を避ける
       # break, next
 
-      def self.build
-        bracket_builder = self.new(:bracket, :build)
-        bracket_builder.scrape
-        bracket_builder.import
-        bracket_builder.finish
-      end
-
       def self.patrol
         bracket_patroller = self.new(:bracket, :patrol)
         bracket_patroller.scrape
@@ -26,27 +19,14 @@ module Clawler
         bracket_patroller.finish
       end
 
-      def self.import
-        bracket_importer = self.new(:bracket, :import)
-        bracket_importer.import
-        bracket_importer.finish
+      def self.build
+        bracket_builder = self.new(:bracket, :build)
+        bracket_builder.import
+        bracket_builder.finish
       end
 
-      def set_cut_obj(bracket_code)
-        @cut_obj = ::Bracket.where(bracket_code: bracket_code).try(:pluck, :date).try(:sort).try(:last)
-      end
-
-      def scrape
-        super(self.method(:each_scrape))
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        end 
+      def set_latest_object(bracket_code)
+        @latest_object = ::Bracket.where(bracket_code: bracket_code).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def each_scrape(bracket_code, page)
@@ -57,8 +37,8 @@ module Clawler
         brackets_info.each do |bracket_info|
           bracket_line = Clawler::Sources::Minkabu.get_bracket_line(bracket_info, bracket_code)
 
-          if @status == :patrol && @cut_obj.present?
-            return {type: :all, lines: bracket_lines} if @cut_obj >= bracket_line[1]
+          if @status == :patrol && @latest_object.present?
+            return {type: :all, lines: bracket_lines} if @latest_object >= bracket_line[1]
           end
           
           bracket_lines << bracket_line

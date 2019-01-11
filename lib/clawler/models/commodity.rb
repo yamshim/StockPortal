@@ -12,13 +12,6 @@ module Clawler
       # 重複データの保存を避ける
       # break, next
 
-      def self.build
-        commodity_builder = self.new(:commodity, :build, true)
-        commodity_builder.scrape
-        commodity_builder.import
-        commodity_builder.finish
-      end
-
       def self.patrol
         commodity_patroller = self.new(:commodity, :patrol, true)
         commodity_patroller.scrape
@@ -26,27 +19,14 @@ module Clawler
         commodity_patroller.finish
       end
 
-      def self.import
-        commodity_importer = self.new(:commodity, :import)
-        commodity_importer.import
-        commodity_importer.finish
+      def self.build
+        commodity_builder = self.new(:commodity, :build)
+        commodity_builder.import
+        commodity_builder.finish
       end
 
-      def set_cut_obj(commodity_code)
-        @cut_obj = ::Commodity.where(commodity_code: commodity_code).try(:pluck, :date).try(:sort).try(:last)
-      end
-
-      def scrape
-        super(self.method(:each_scrape))
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        end 
+      def set_latest_object(commodity_code)
+        @latest_object = ::Commodity.where(commodity_code: commodity_code).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def each_scrape(commodity_code, page)
@@ -56,8 +36,8 @@ module Clawler
         commodities_info.each do |commodity_info|
           commodity_line = Clawler::Sources::Investing.get_commodity_line(commodity_info, commodity_code)
 
-          if @status == :patrol && @cut_obj.present?
-            return {type: :all, lines: commodity_lines} if @cut_obj >= commodity_line[1]
+          if @status == :patrol && @latest_object.present?
+            return {type: :all, lines: commodity_lines} if @latest_object >= commodity_line[1]
           end
 
           commodity_lines << commodity_line

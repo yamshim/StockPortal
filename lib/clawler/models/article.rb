@@ -12,13 +12,6 @@ module Clawler
       # 重複データの保存を避ける
       # break, next
 
-      def self.build
-        article_builder = self.new(:article, :build)
-        article_builder.scrape
-        article_builder.import
-        article_builder.finish
-      end
-
       def self.patrol
         article_patroller = self.new(:article, :patrol)
         article_patroller.scrape
@@ -26,36 +19,16 @@ module Clawler
         article_patroller.finish
       end
 
-      def self.import
-        article_importer = self.new(:article, :import)
-        article_importer.import
-        article_importer.finish
+      def self.build
+        article_builder = self.new(:article, :build)
+        article_builder.import
+        article_builder.finish
       end
 
       def self.update
         article_updater = self.new(:article, :update)
         article_updater.import
         article_updater.finish
-      end
-
-      def set_cut_obj(company_code)
-        @cut_obj = nil
-      end
-
-      def scrape
-        super(self.method(:each_scrape))
-        # write_proxies
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        when :update
-          super(self.method(:update_import))
-        end 
       end
 
       def each_scrape(company_code, page)

@@ -12,13 +12,6 @@ module Clawler
       # 重複データの保存を避ける
       # break, next
 
-      def self.build
-        foreign_exchange_builder = self.new(:foreign_exchange, :build)
-        foreign_exchange_builder.scrape
-        foreign_exchange_builder.import
-        foreign_exchange_builder.finish
-      end
-
       def self.patrol
         foreign_exchange_patroller = self.new(:foreign_exchange, :patrol)
         foreign_exchange_patroller.scrape
@@ -26,27 +19,14 @@ module Clawler
         foreign_exchange_patroller.finish
       end
 
-      def self.import
-        foreign_exchange_importer = self.new(:foreign_exchange, :import)
-        foreign_exchange_importer.import
-        foreign_exchange_importer.finish
+      def self.build
+        foreign_exchange_builder = self.new(:foreign_exchange, :build)
+        foreign_exchange_builder.build
+        foreign_exchange_builder.finish
       end
 
-      def set_cut_obj(currency_code)
-        @cut_obj = ::ForeignExchange.where(currency_code: currency_code).try(:pluck, :date).try(:sort).try(:last)
-      end
-
-      def scrape
-        super(self.method(:each_scrape))
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        end 
+      def set_latest_object(currency_code)
+        @latest_object = ::ForeignExchange.where(currency_code: currency_code).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def each_scrape(currency_code, page)
@@ -58,8 +38,8 @@ module Clawler
         foreign_exchanges_info.each do |foreign_exchange_info|
           foreign_exchange_line = Clawler::Sources::Yahoo.get_foreign_exchange_line(foreign_exchange_info, currency_code)
 
-          if @status == :patrol && @cut_obj.present?
-            return {type: :all, lines: foreign_exchange_lines} if @cut_obj >= foreign_exchange_line[1] 
+          if @status == :patrol && @latest_object.present?
+            return {type: :all, lines: foreign_exchange_lines} if @latest_object >= foreign_exchange_line[1] 
           end
 
           foreign_exchange_lines << foreign_exchange_line

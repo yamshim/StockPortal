@@ -6,9 +6,10 @@ module Clawler
     require 'zlib'
     require 'rexml/document'
 
+    include AllUtils
+
     def get_content(url, interval)
-      error = {}
-      error[:error_count] = 0
+      error_info = []
       wait_interval(interval)
       begin
         # $proxyの初値は必ずnil
@@ -16,19 +17,16 @@ module Clawler
         charset = html.charset
         Nokogiri::HTML.parse(html, nil, charset) 
       rescue => ex
-        error[:error_count] += 1
-        if error[:error_count] % $proxy_size == 0
-          error[:action] = "LOAD=#{$proxy}##{url}=ERROR"
-          error[:error_name] = ex.class.name
-          error[:error_message] = ex.message
-          error[:error_backtrace] = ex.backtrace[0]
-          error[:proxy] = $proxy
-          error[:url] = url
-          CLAWL_LOGGER.info(error)
-          send_logger_mail(error)
-          sleep(600)
+        # サイトにアクセスするというアクションに対する例外を補足 サーバがダウンしている、urlが間違っている、ipアドレスがbanされている、など
+        error_info << add_error_info(:get_content, url, ex)
+        CLAWL_LOGGER.info({action: 'ERROR', source: self, error_info: error_info.last})
+        if error_info.count >= 100 # エラーの理由によって条件を変えるべきかも
+          # ここに達したら処理終了
+          CLAWL_LOGGER.info({action: 'FAILURE', source: self, error_info: error_info.last})
+          send_logger_mail({action: 'FAILURE', source: self, method: :get_content}, {error_info: error_info})
+          exit
         end
-        change_proxy
+        # change_proxy
         retry
       end
     end
@@ -52,10 +50,20 @@ module Clawler
       Date.today
     end
 
+    def add_error_info(method, object, ex)
+      error = {}
+      error[:method] = method
+      error[:object] = object
+      error[:class_name] = ex.class.name
+      error[:message] = ex.message
+      error[:backtrace] = ex.backtrace[0]
+      error[:proxy] = $proxy
+      error
+    end
+
     def set_proxies
       $proxy = nil
       $proxies = read_proxies
-      $proxy_size = $proxies.size + 1 # nilも含めるため+1
     end
 
     def change_proxy
@@ -74,6 +82,13 @@ module Clawler
       CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/proxies.csv", 'wb') do |writer|
         writer << proxies
       end
+    end
+
+    def set_driver
+      capabilities = Selenium::WebDriver::Remote::Capabilities.phantomjs('phantomjs.page.settings.userAgent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11')
+      driver = ::Selenium::WebDriver.for(:phantomjs, :desired_capabilities => capabilities)
+      wait = ::Selenium::WebDriver::Wait.new(timeout: 10)
+      [driver, wait]
     end
 
   end

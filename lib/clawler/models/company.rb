@@ -12,13 +12,6 @@ module Clawler
       # 重複データの保存を避ける
       # 定期的に情報をアップデートするためのメソッド追加
 
-      def self.build
-        company_builder = self.new(:company, :build)
-        company_builder.scrape
-        company_builder.import
-        company_builder.finish
-      end
-
       def self.patrol
         company_patroller = self.new(:company, :patrol)
         company_patroller.scrape
@@ -26,10 +19,10 @@ module Clawler
         company_patroller.finish
       end
 
-      def self.import
-        company_importer = self.new(:company, :import)
-        company_importer.import
-        company_importer.finish
+      def self.build
+        company_builder = self.new(:company, :build)
+        company_builder.build
+        company_builder.finish
       end
 
       def self.update
@@ -39,23 +32,8 @@ module Clawler
         company_updater.finish
       end
 
-      def set_cut_obj(industry_code)
-        @cut_obj = ::Company.where(industry_code: industry_code).try(:pluck, :company_code).try(:sort)
-      end  
-
-      def scrape
-        super(self.method(:each_scrape))
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        when :update
-          super(self.method(:update_import))
-        end
+      def set_latest_object(industry_code)
+        @latest_object = ::Company.where(industry_code: industry_code).try(:pluck, :company_code).try(:sort)
       end
 
       def each_scrape(industry_code, page)
@@ -66,8 +44,8 @@ module Clawler
           company_codes = Clawler::Sources::Kabutan.get_company_codes(industry_code, page)
 
           return {type: :break, lines: nil} if company_codes.empty?
-          if @status == :patrol && @cut_obj.present?
-            return {type: :next, lines: nil} if (company_codes = company_codes - @cut_obj).empty?
+          if @status == :patrol && @latest_object.present?
+            return {type: :next, lines: nil} if (company_codes = company_codes - @latest_object).empty?
           end
 
           company_codes.each do |company_code|
@@ -79,7 +57,7 @@ module Clawler
           company_headers = Clawler::Sources::Rakuten.get_company_headers(industry_code, page)
 
           return {type: :break, lines: nil} if company_headers.empty?
-          company_headers = company_headers.select{|company_header| @cut_obj.include?(company_header[1].split('.')[0].to_i)}
+          company_headers = company_headers.select{|company_header| @latest_object.include?(company_header[1].split('.')[0].to_i)}
 
           company_headers.each do |company_header|
             company_line = Clawler::Sources::Rakuten.get_company_line(company_header, industry_code)

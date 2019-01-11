@@ -12,51 +12,27 @@ module Clawler
       # 重複データの保存を避ける
       # break, next
 
-      def self.build
-        transaction_builder = self.new(:transaction, :build)
-        transaction_builder.scrape
-        transaction_builder.import
-        transaction_builder.finish
-      end
-
-      def self.patrol
+      def self.patrol # 巡回してデータを取得、新しくデータベースに追加
         transaction_patroller = self.new(:transaction, :patrol)
         transaction_patroller.scrape
         transaction_patroller.import
         transaction_patroller.finish
       end
 
-      def self.import
-        transaction_importer = self.new(:transaction, :import)
-        transaction_importer.import
-        transaction_importer.finish
+      def self.fetch # データベースのデータをCSVに保存（追加かリライトか）
+        transaction_fetcher = self.new(:transaction, :fetch)
+        transaction_fetcher.export
+        transaction_fetcher.finish
       end
 
-      def self.peel
-        transaction_peeler = self.new(:transaction, :peel, true)
-        transaction_peeler.scrape
-        transaction_peeler.finish
+      def self.build # CSVのデータをデータベースに新しく保存
+        transaction_builder = self.new(:transaction, :build)
+        transaction_builder.import
+        transaction_builder.finish
       end
 
-      def set_cut_obj(company_code)
-        @cut_obj = ::Company.find_by_company_code(company_code).try(:transactions).try(:pluck, :date).try(:sort).try(:last)
-      end
-
-      def scrape
-        if @status == :peel
-          super(self.method(:chart_scrape))
-        else
-          super(self.method(:each_scrape))
-        end
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        end
+      def set_latest_object(company_code)
+        @latest_object = ::Company.find_by_company_code(company_code).try(:transactions).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def each_scrape(company_code, page)
@@ -69,8 +45,8 @@ module Clawler
           transaction_line = Clawler::Sources::Yahoo.get_transaction_line(transaction_info, company_code, page, index)
           next if transaction_line.nil?
 
-          if @status == :patrol && @cut_obj.present?
-            return {type: :all, lines: transaction_lines} if @cut_obj >= transaction_line[1] 
+          if @status == :patrol && @latest_object.present?
+            return {type: :all, lines: transaction_lines} if @latest_object >= transaction_line[1] 
           end
 
           transaction_lines << transaction_line
@@ -108,7 +84,6 @@ module Clawler
             company.transactions.build(transactions_info).each(&:save!)
           end
         end
-        true
       end
 
       def csv_import
@@ -141,29 +116,28 @@ module Clawler
             company.transactions.build(transactions_info).each(&:save!)
           end
         end
-        true
       end
 
-      def chart_scrape(company_code, page)
-        dir_name = "#{Rails.root}/public/images/#{Rails.env}/chart/#{company_code}" # 後で変更
-        FileUtils.mkdir_p(dir_name) unless File.exists?(dir_name)
-
-        now_time = Time.now
-        now_date = now_time.to_date
-        former_range = (Time.new(*[now_date.year, now_date.month, now_date.day, 15, 30, 00, '+09:00'])..Time.new(*[now_date.year, now_date.month, now_date.day, 23, 59, 59, '+09:00']))
-        latter_range = (Time.new(*[now_date.year, now_date.month, now_date.day, 00, 00, 00, '+09:00'])..Time.new(*[now_date.year, now_date.month, now_date.day, 8, 49, 59, '+09:00']))
-        if former_range.cover?(now_time)
-          file_name = dir_name + "/#{now_date}.jpg"
-        elsif latter_range.cover?(now_time)
-          file_name = dir_name + "/#{now_date - 1}.jpg"
-        else
-          raise "ToExit:PeelTimeOver:#{now_time}"
+      def each_export(company_code)
+        lines = []
+        transactions = ::Company.find_by_company_code(company_code).transactions.order(:date)
+        transactions.each do |transaction|
+          transaction_hash = transaction.attributes
+          transaction_hash.delete('company_id')
+          transaction_hash.delete('created_at')
+          transaction_hash.delete('updated_at')
+          lines << transaction_hash.values
         end
-
-        unless File.size?(file_name)
-          Clawler::Sources::Sbi.get_chart(company_code, file_name, @driver, @wait)
+        path = "#{Rails.root}/tmp/export_file/#{@clawler_type}_lines_#{company_code}.csv"
+        CSV.open(path, 'wb') do |writer|
+          lines.each do |line|
+            writer << line
+          end
         end
-        return {type: :break, lines: nil}
+        header = {action: 'SUCCESS', clawler_type: @clawler_type, status: @status, method: :export, proxy: $proxy}
+        content = {attachment: path}
+        send_logger_mail(header, content)
+        FileUtils.rm(path)
       end
 
     end

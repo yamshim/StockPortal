@@ -2,98 +2,28 @@
 
 module Clawler
   class Base
-    include AllUtils
     include Clawler::Utils
 
-    def initialize(model_type, status, driver=nil)
-      @model_type = model_type
+    def initialize(clawler_type, status, driver=nil)
+      @clawler_type = clawler_type
       @status = status
-      @error_info = {}
-      # set_proxies
+      @error_info = []
+      @objects = []
+      @sample_lines = [] # 逐次保存するならメール確認用に必要
+      @lines = [] # 全てのobjectのlinesを入れる可能性がある
+      set_proxies # articleのときだけにするかどうか
       if driver
-        set_selenium
+        @driver, @wait = set_driver
       end
     end
 
-    def scrape(each_scrape)
-      objs = iterate_objs
-      set = 0
-      @lines = []
-
-      log_output(:scrape, :start) # startログ
-      loop do
-        begin
-          objs[set..-1].each do |obj|
-            obj_lines = []
-            set_cut_obj(obj) if [:patrol, :update].include?(@status)
-
-            (1..1000000).each do |page|
-              log_output(:scrape, :progress, obj, page) # progressログ
-              result = each_scrape.call(obj, page)
-              case result[:type]
-              when :break
-                obj_lines = uniq_lines(obj_lines)
-                break
-              when :next
-                next
-              when :part
-                obj_lines = obj_lines + result[:lines]
-                @lines = (@lines || []) + result[:lines]
-              when :all
-                obj_lines = obj_lines + result[:lines]
-                @lines = (@lines || []) + result[:lines]
-                obj_lines = uniq_lines(obj_lines)
-                @lines = uniq_lines(@lines)
-                break
-              end
-            end
-
-            obj_lines = self.post_process(obj_lines) if @model_type == :trend
-            @lines = [] if @status == :build
-
-            unless @model_type == :proxy
-              build_csv(obj_lines, obj) if @status == :build
-              add_csv(obj_lines, obj) if @status == :patrol
-              update_csv(obj_lines, obj) if @status == :update
-            end
-            set += 1 # 上記の処理が全て成功していたらカウント
-            if @lines.size >= 100
-              CLAWL_LOGGER.info(action: "over100")
-              self.line_import # selfはClawler::Models::Transactionなどのインスタンス
-              CLAWL_LOGGER.info(action: "import_success")
-              @lines = []
-            end
-          end
-        rescue => ex
-          @error_info[:error_count] = (@error_info[:error_count].blank? ? 1 : @error_info[:error_count] + 1)
-          if (@error_info[:error_count] % 10 == 0) && (@error_info[:error_count] <= 100)
-            set_error_info(ex)
-            log_output(:scrape, :error, nil, nil, @error_info) # errorログ
-            send_logger_mail(@error_info)
-            sleep(300)
-          elsif (@error_info[:error_count] > 1000) || (ex.message =~ /ToExit/)
-            set_error_info(ex)
-            log_output(:scrape, :error, nil, nil, @error_info) # errorログ
-            send_logger_mail(@error_info)
-            @driver.quit unless @driver.nil?
-            exit
-          end
-        end
-        break if set == objs.size
-      end
-      log_output(:scrape, :end) # endログ
-      @driver.quit unless @driver.nil?
-
-      @lines
-    end
-
-    def iterate_objs
+    def get_iterated_objects
       # loop対象のオブジェクトをセット
-      case @model_type
+      case @clawler_type
       when :company
         cvals(:industry).sort
       when :transaction, :credit_deal, :article
-        Company.pluck(:company_code).sort
+        Company.pluck(:company_code).sort[0..1]
       when :foreign_exchange
         cvals(:currency).sort
       when :bracket
@@ -107,37 +37,124 @@ module Clawler
       end
     end
 
-    def import(line_import)
-      CLAWL_LOGGER.info(action: "IMPORT=#{@model_type}##{@status}=START")
-      line_import.call
-      CLAWL_LOGGER.info(action: "IMPORT=#{@model_type}##{@status}=END")
+    def scrape
+      log_output(:scrape, :start) # startログ
+      @objects = get_iterated_objects
+      object_count = 0
+
+      loop do
+        begin
+          @objects[object_count..-1].each do |object|
+            object_lines = [] # 各objectのlinesのみ入れる
+            set_latest_object(object) if [:patrol, :update].include?(@status) # 検討
+
+            (1..1000000).each do |page|
+              log_output(:scrape, :progress, object, page) # progressログ
+              # result = each_scrape.call(object, page)
+              result = self.each_scrape(object, page)
+              case result[:type]
+              when :break # resultが空かつ終了 処理的には:allと統合してもいい
+                object_lines = get_uniq_lines(object_lines)
+                break
+              when :next # resultを追加せずスキップ
+                next
+              when :part # resultを追加して続行
+                object_lines += result[:lines]
+              when :all # resultを追加して終了
+                object_lines += result[:lines]
+                object_lines = get_uniq_lines(object_lines)
+                break
+              end
+            end
+
+            @lines += object_lines
+            object_lines = self.post_process(object_lines) if @clawler_type == :trend # 検討
+
+            if @lines.count >= 1 # 今のところ逐次保存
+              self.line_import # ここのselfはClawler::Models::Transactionなどのインスタンス
+              log_output(:scrape, :import, object) # importログ, objectまでのimportを完了
+              @sample_lines += @lines if @sample_lines.count <= 5 # 逐次保存するならメール確認用に必要
+              @lines = []
+            end
+
+            object_count += 1 # 上記の処理が全て成功していたらカウント
+          end
+        rescue => ex
+          # サイトへのアクセス以外の例外を補足
+          @error_info << add_error_info(:scrape, @objects[object_count], ex)
+          log_output(:scrape, :error, @objects[object_count]) # errorログ
+          if @error_info.count >= 100
+            # ここに達したら処理終了
+            log_output(:scrape, :failure, @objects[object_count]) # exitログ
+            send_logger_mail({action: 'FAILURE', clawler_type: @clawler_type, status: @status, method: :scrape, proxy: $proxy}, {error_info: @error_info}) # exitメール
+            @driver.quit unless @driver.nil?
+            exit
+          end
+          object_count += 1 # エラーを起こしたobjectをスキップして処理を続行
+          retry
+        end
+        break if object_count == @objects.count
+      end
+
+      @driver.quit unless @driver.nil?
+      log_output(:scrape, :end) # endログ
+    end
+
+    def import # 逐次保存だとpatrolで保存処理が発生しない
+      log_output(:import, :start)
+      case @status
+      when :build
+        self.csv_import
+      when :patrol
+        self.line_import
+      when :update
+        self.update_import
+      end
+      log_output(:import, :end)
     rescue => ex
-      set_error_info(ex, :import, :exit)
-      CLAWL_LOGGER.info(@error_info)
-      send_logger_mail(@error_info) # ここでexceptionが起こったら？
+      @error_info << add_error_info(:import, @objects.last, ex)
+      log_output(:import, :failure, @objects.last)
+      send_logger_mail({action: 'FAILURE', clawler_type: @clawler_type, status: @status, method: :import, proxy: $proxy}, {error_info: @error_info})
       exit
     end
 
-    def finish
-      hash = {}
-      hash[:action] = "FINISH##{@model_type}=#{@status}=SUCCESS"
-      case @status
-      when :build, :import, :update
-      when :patrol
-        hash[:lines] = @lines[0..1]
-      when :peel
-        dir_name = "#{Rails.root}/public/images/#{Rails.env}/chart/9501/"
-        hash[:attachment] = dir_name + Dir::entries(dir_name).sort[-1]
+    def export
+      @objects = get_iterated_objects
+      #@objects[0..0].each do |object|
+      [3966, 4751].each do |object|
+        self.each_export(object)
       end
-      CLAWL_LOGGER.info(hash)
-      send_logger_mail(hash)
-      true
     end
 
-    def build_csv(lines, obj)
-      dir_name = "#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}"
+    def finish
+      if @error_info.present? && (@error_info.count == @objects.count) # scrape通らない場合、@objects = []
+        header = {action: 'FAILURE', clawler_type: @clawler_type, status: @status, method: :finish, proxy: $proxy}
+        content = {error_info: @error_info}
+        action = 'FAILURE'
+      elsif @error_info.present?
+        header = {action: 'SUCCESS+ERROR', clawler_type: @clawler_type, status: @status, method: :finish, proxy: $proxy}
+        content = {error_info: @error_info}
+        action = 'SUCCESS+ERROR'
+      else
+        header = {action: 'SUCCESS', clawler_type: @clawler_type, status: @status, method: :finish, proxy: $proxy}
+        content = {}
+        action = 'SUCCESS'
+      end
+      case @clawler_type
+      when :chart
+        dir_name = "#{Rails.root}/public/images/#{Rails.env}/chart/9501/" # サンプル送信
+        content[:attachment] = dir_name + Dir::entries(dir_name).sort[-1]
+      else
+        content[:lines] = @sample_lines
+      end
+      CLAWL_LOGGER.info({action: action, clawler_type: @clawler_type, status: @status, method: :finish, proxy: $proxy, error_info: @error_info.last})
+      send_logger_mail(header, content)
+    end
+
+    def build_csv(lines, object)
+      dir_name = "#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@clawler_type}"
       FileUtils.mkdir_p(dir_name) unless File.exists?(dir_name)
-      file_name = dir_name + "/#{@model_type}_lines_#{obj}.csv"
+      file_name = dir_name + "/#{@clawler_type}_lines_#{object}.csv"
       CSV.open(file_name, 'wb') do |writer|
         lines.each do |line|
           writer << line
@@ -145,31 +162,31 @@ module Clawler
       end
     end
 
-    def add_csv(lines, obj)
-      csv_text = get_csv_text(obj)
-      lines = case @model_type
+    def add_csv(lines, object)
+      csv_text = get_csv_text(object)
+      lines = case @clawler_type
       when :trend
-        uniq_objs = CSV.parse(csv_text).map{|line| trim_to_date(line[0])}
-        lines.reject{|line| uniq_objs.include?(line[0])}
+        uniq_objects = CSV.parse(csv_text).map{|line| trim_to_date(line[0])}
+        lines.reject{|line| uniq_objects.include?(line[0])}
       when :company
-        uniq_objs = CSV.parse(csv_text).map{|line| line[1].to_i}
-        lines.reject{|line| uniq_objs.include?(line[1])}
+        uniq_objects = CSV.parse(csv_text).map{|line| line[1].to_i}
+        lines.reject{|line| uniq_objects.include?(line[1])}
       when :transaction, :credit_deal, :foreign_exchange, :bracket, :commodity
-        uniq_objs = CSV.parse(csv_text).map{|line| trim_to_date(line[1])}
-        lines.reject{|line| uniq_objs.include?(line[1])}
+        uniq_objects = CSV.parse(csv_text).map{|line| trim_to_date(line[1])}
+        lines.reject{|line| uniq_objects.include?(line[1])}
       when :article
-        uniq_objs = CSV.parse(csv_text).map{|line| line[2]}
-        lines.reject{|line| uniq_objs.include?(line[2])}
+        uniq_objects = CSV.parse(csv_text).map{|line| line[2]}
+        lines.reject{|line| uniq_objects.include?(line[2])}
       end
 
-      CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}/#{@model_type}_lines_#{obj}.csv", 'ab+') do |writer|
+      CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@clawler_type}/#{@clawler_type}_lines_#{object}.csv", 'ab+') do |writer|
         lines.each do |line|
           writer << line
         end
       end
 
-      if @model_type == :article
-        CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}/tmp.csv", 'ab+') do |writer|
+      if @clawler_type == :article
+        CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@clawler_type}/tmp.csv", 'ab+') do |writer|
           lines.each do |line|
             writer << line
           end
@@ -177,10 +194,10 @@ module Clawler
       end
     end
 
-    def update_csv(lines, obj)
-      csv_text = get_csv_text(obj)
+    def update_csv(lines, object)
+      csv_text = get_csv_text(object)
       csv_lines = CSV.parse(csv_text).uniq
-      lines = case @model_type
+      lines = case @clawler_type
       when :company
         update_company_codes = lines.map{|line| line[1]}
         csv_lines = csv_lines.reject{|csv_line| update_company_codes.include?(csv_line[1].to_i)}
@@ -191,46 +208,36 @@ module Clawler
         (csv_lines + lines)
       end
         
-      CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}/#{@model_type}_lines_#{obj}.csv", 'wb') do |writer|
+      CSV.open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@clawler_type}/#{@clawler_type}_lines_#{object}.csv", 'wb') do |writer|
         lines.each do |line|
           writer << line
         end
       end
     end
 
-    def get_csv_text(obj)
-      open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@model_type}/#{@model_type}_lines_#{obj}.csv", &:read).toutf8.strip
+    def get_csv_text(object)
+      open("#{Rails.root}/db/seeds/csv/#{Rails.env}/#{@clawler_type}/#{@clawler_type}_lines_#{object}.csv", &:read).toutf8.strip
     rescue => ex
       '' # ファイルが存在しない時空文字を返す
     end
 
-    def uniq_lines(lines)
-      lines = case @model_type
+    def get_uniq_lines(lines)
+      lines = case @clawler_type
       when :trend, :proxy
         lines
       when :company, :transaction, :credit_deal, :foreign_exchange, :bracket, :commodity
-        lines.uniq{|line| line[1]}
+        lines.uniq{|line| line[1]} # companyはcompany_code, それ以外はdateでuniq
       when :article
-        lines.uniq{|line| line[2]}
+        lines.uniq{|line| line[2]} # articleはurlでuniq
       end
     end
 
-    def set_selenium
-      capabilities = Selenium::WebDriver::Remote::Capabilities.phantomjs('phantomjs.page.settings.userAgent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11')
-      @driver = ::Selenium::WebDriver.for(:phantomjs, :desired_capabilities => capabilities)
-      @wait = ::Selenium::WebDriver::Wait.new(timeout: 10)
-    end
-
-    def set_error_info(ex)
-      @error_info[:error_name] = ex.class.name
-      @error_info[:error_message] = ex.message
-      @error_info[:error_backtrace] = ex.backtrace[0]
-    end
-
-    def log_output(method, action, obj=nil, page=nil, error_info=nil)
+    def log_output(method, action, object=nil, page=nil)
       case action
-      when :start, :end, :progress, :error
-        CLAWL_LOGGER.info({model_type: @model_type, status: @status, method: method, action: action.to_s, obj: obj, page: page, proxy: $proxy, error_info: error_info})
+      when :start, :end, :progress
+        CLAWL_LOGGER.info({action: action.to_s.upcase, clawler_type: @clawler_type, status: @status, method: method, object: object, page: page, proxy: $proxy})
+      when :error, :exit
+        CLAWL_LOGGER.info({action: action.to_s.upcase, clawler_type: @clawler_type, status: @status, method: method, object: object, page: page, proxy: $proxy, error_info: @error_info.last})
       end
     end
 

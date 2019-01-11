@@ -12,13 +12,6 @@ module Clawler
       # 重複データの保存を避ける
       # break, next
 
-      def self.build
-        trend_builder = self.new(:trend, :build)
-        trend_builder.scrape
-        trend_builder.import
-        trend_builder.finish
-      end
-
       def self.patrol
         trend_patroller = self.new(:trend, :patrol)
         trend_patroller.scrape
@@ -26,30 +19,17 @@ module Clawler
         trend_patroller.finish
       end
 
-      def self.import
-        trend_importer = self.new(:trend, :import)
-        trend_importer.import
-        trend_importer.finish
+      def self.build
+        trend_builder = self.new(:trend, :build)
+        trend_builder.build
+        trend_builder.finish
       end
 
-      def set_cut_obj(source)
-        @cut_obj = ::Trend.pluck(:date).try(:sort).try(:last)
+      def set_latest_object(trend_source)
+        @latest_object = ::Trend.pluck(:date).try(:sort).try(:last)
       end
 
-      def scrape
-        super(self.method(:each_scrape))
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        end 
-      end
-
-      def each_scrape(source, page)
+      def each_scrape(trend_source, page)
         trend_lines = []
         urls = Clawler::Sources::Nikkei.get_urls(page)
 
@@ -59,8 +39,8 @@ module Clawler
           date, texts = Clawler::Sources::Nikkei.get_info(url)
 
           next if (date.blank? && texts.blank?) || (date >= Date.today) # 前日までの記事を対象にする 例えば25日の25時にクロールすることを前提にして25日までの記事をチェックするように
-          if @status == :patrol && @cut_obj.present?
-            return {type: :all, lines: trend_lines} if @cut_obj >= date
+          if @status == :patrol && @latest_object.present?
+            return {type: :all, lines: trend_lines} if @latest_object >= date
           end
           words = Clawler::Sources::Yahoo.get_words(texts) # get_trend_linesにして[date, words]を返したほうがいい
           trend_lines << [date, words]
@@ -79,7 +59,7 @@ module Clawler
 
           processed_lines << processed_line
         end
-        @lines = processed_lines.clone # objsが一つだからいいが、複数になるとpatrolのとき成り立たなくなる
+        @lines = processed_lines.clone # objectsが一つだからいいが、複数になるとpatrolのとき成り立たなくなる
         processed_lines
       end
 

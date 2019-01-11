@@ -14,9 +14,9 @@ commodity_patrol="#{rails_runner} Clawler::Models::Commodity.patrol"
 company_patrol="#{rails_runner} Clawler::Models::Company.patrol"
 credit_deal_patrol="#{rails_runner} Clawler::Models::CreditDeal.patrol"
 foreign_exchange_patrol="#{rails_runner} Clawler::Models::ForeignExchange.patrol"
-proxy_patrol="#{rails_runner} Clawler::Models::Proxy.patrol"
+proxy_patrol="#{rails_runner} Clawler::Files::Proxy.patrol"
 transaction_patrol="#{rails_runner} Clawler::Models::Transaction.patrol"
-transaction_peel="#{rails_runner} Clawler::Models::Transaction.peel"
+chart_patrol="#{rails_runner} Clawler::Files::Chart.patrol"
 trend_patrol="#{rails_runner} Clawler::Models::Trend.patrol"
 
 # every :day, at: '00:30' do
@@ -52,7 +52,7 @@ every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '18:30' do
 end
 
 # every [:monday, :tuesday, :wednesday, :thursday, :friday], at: '15:40' do
-#   command "#{cd_path} && #{transaction_peel}"
+#   command "#{cd_path} && #{chart_patrol}"
 # end
 
 # every :day, at: '00:05' do

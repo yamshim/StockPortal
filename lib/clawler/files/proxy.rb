@@ -1,6 +1,6 @@
 # coding: utf-8
 module Clawler
-  module Models
+  module Files
     class Proxy < Clawler::Base
       extend AllUtils
       # include Clawler::Sources
@@ -19,23 +19,10 @@ module Clawler
         proxy_patroller.finish
       end
 
-      def set_cut_obj(company_code)
-        @cut_obj = nil
+      def set_latest_object(company_code)
+        @latest_object = nil
       end
-
-      def scrape
-        super(self.method(:each_scrape))
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        end 
-      end
-
+      
       def each_scrape(source, page)
         proxy_lines = case csym(:proxy_source, source)
         when :getproxy
@@ -61,7 +48,7 @@ module Clawler
 
         @lines = @lines.map do |proxy|
           begin
-            html = timeout(10){open('http://www.livedoor.com/', 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 10, :proxy => proxy)}
+            html = timeout(3){open('http://www.livedoor.com/', 'User-Agent' => 'Mozilla/5.0 (Mac OS X 10.6) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11', :read_timeout => 3, :proxy => proxy)}
             html.class == Tempfile ? proxy : nil
           rescue => ex
             nil

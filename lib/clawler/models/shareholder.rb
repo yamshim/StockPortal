@@ -11,14 +11,7 @@ module Clawler
       # 強化
       # 重複データの保存を避ける
       # break, next
-
-      def self.build
-        shareholder_builder = self.new(:shareholder, :build)
-        shareholder_builder.scrape
-        shareholder_builder.import
-        shareholder_builder.finish
-      end
-
+      
       def self.patrol
         shareholder_patroller = self.new(:shareholder, :patrol)
         shareholder_patroller.scrape
@@ -26,10 +19,10 @@ module Clawler
         shareholder_patroller.finish
       end
 
-      def self.import
-        shareholder_importer = self.new(:shareholder, :import)
-        shareholder_importer.import
-        shareholder_importer.finish
+      def self.build
+        shareholder_builder = self.new(:shareholder, :build)
+        shareholder_builder.build
+        shareholder_builder.finish
       end
 
       def self.update
@@ -38,24 +31,8 @@ module Clawler
         shareholder_updater.finish
       end
 
-      def set_cut_obj(company_code)
-        @cut_obj = nil
-      end
-
-      def scrape
-        super(self.method(:each_scrape))
-        write_proxies
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        when :update
-          super(self.method(:update_import))
-        end 
+      def set_latest_object(company_code)
+        @latest_object = nil
       end
 
       def each_scrape(company_code, page)

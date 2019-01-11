@@ -12,13 +12,6 @@ module Clawler
       # 重複データの保存を避ける
       # break, next
 
-      def self.build
-        credit_deal_builder = self.new(:credit_deal, :build)
-        credit_deal_builder.scrape
-        credit_deal_builder.import
-        credit_deal_builder.finish
-      end
-
       def self.patrol
         credit_deal_patroller = self.new(:credit_deal, :patrol)
         credit_deal_patroller.scrape
@@ -26,27 +19,14 @@ module Clawler
         credit_deal_patroller.finish
       end
 
-      def self.import
-        credit_deal_importer = self.new(:credit_deal, :import)
-        credit_deal_importer.import
-        credit_deal_importer.finish
+      def self.build
+        credit_deal_builder = self.new(:credit_deal, :build)
+        credit_deal_builder.build
+        credit_deal_builder.finish
       end
 
-      def set_cut_obj(company_code)
-        @cut_obj = ::Company.find_by_company_code(company_code).try(:credit_deals).try(:pluck, :date).try(:sort).try(:last)
-      end
-
-      def scrape
-        super(self.method(:each_scrape))
-      end
-
-      def import
-        case @status
-        when :build, :import
-          super(self.method(:csv_import))
-        when :patrol
-          super(self.method(:line_import))
-        end 
+      def set_latest_object(company_code)
+        @latest_object = ::Company.find_by_company_code(company_code).try(:credit_deals).try(:pluck, :date).try(:sort).try(:last)
       end
 
       def each_scrape(company_code, page)
@@ -58,8 +38,8 @@ module Clawler
         credit_deals_info.each do |credit_deal_info|
           credit_deal_line = Clawler::Sources::Yahoo.get_credit_deal_line(credit_deal_info, company_code)
 
-          if @status == :patrol && @cut_obj.present?
-            return {type: :all, lines: credit_deal_lines} if @cut_obj >= credit_deal_line[1] 
+          if @status == :patrol && @latest_object.present?
+            return {type: :all, lines: credit_deal_lines} if @latest_object >= credit_deal_line[1] 
           end
 
           credit_deal_lines << credit_deal_line

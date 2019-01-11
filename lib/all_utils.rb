@@ -65,26 +65,27 @@ module AllUtils
   end
 
   def trim_to_date(str)
-    ary = str.to_s.split(/[^0-9]/).map{|char| char.to_i}
-    if ary.size == 3
-      Date.new(*ary)
+    date_ary = str.to_s.split(/[^0-9]/).map{|char| char.to_i}
+    if date_ary.size == 3
+      Date.new(*date_ary)
     else
       nil
     end
   end
 
-  def send_logger_mail(hash)
-    if Rails.env.production?
+  def send_logger_mail(header, content)
+    # if Rails.env.production?
+    if true
       gmail = Gmail.connect(ENV['LOGGER_MAIL_ADRESS'], ENV['LOGGER_MAIL_PASSWORD'])
       gmail.deliver do
         body_encoding = 'UTF-8'
         charset = 'UTF-8'
         to ENV['LOGGER_MAIL_ADRESS']
-        subject hash[:action]
+        subject header
         text_part do
-          body hash
+          body content
         end
-        add_file hash[:attachment] if hash[:attachment].present?
+        add_file content[:attachment] if content[:attachment].present?
       end
       gmail.logout
     end
