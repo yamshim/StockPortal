@@ -23,7 +23,7 @@ module Clawler
       when :company
         cvals(:industry).sort
       when :transaction, :credit_deal, :article
-        Company.pluck(:company_code).sort[0..1]
+        Company.pluck(:company_code).sort
       when :foreign_exchange
         cvals(:currency).sort
       when :bracket
