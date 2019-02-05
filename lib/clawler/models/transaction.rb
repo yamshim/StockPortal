@@ -129,6 +129,7 @@ module Clawler
           lines << transaction_hash.values
         end
         path = "#{Rails.root}/tmp/export_file/#{@clawler_type}_lines_#{company_code}.csv"
+        FileUtils.mkdir_p(path) unless File.exists?(path)
         CSV.open(path, 'wb') do |writer|
           lines.each do |line|
             writer << line
