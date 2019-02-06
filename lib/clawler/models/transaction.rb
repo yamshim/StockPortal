@@ -128,8 +128,9 @@ module Clawler
           transaction_hash.delete('updated_at')
           lines << transaction_hash.values
         end
-        path = "#{Rails.root}/tmp/export_file/#{@clawler_type}_lines_#{company_code}.csv"
-        FileUtils.mkdir_p(path) unless File.exists?(path)
+        dir = "#{Rails.root}/tmp/export_file"
+        FileUtils.mkdir_p(dir) unless File.exists?(dir)
+        path = dir + "/#{@clawler_type}_lines_#{company_code}.csv"
         CSV.open(path, 'wb') do |writer|
           lines.each do |line|
             writer << line
