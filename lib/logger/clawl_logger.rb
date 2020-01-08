@@ -1,4 +1,4 @@
-class ClawlLogger < Logger
+ class ClawlLogger < Logger
   def format_message(severity, timestamp, progname, data)
     data[:time] ||= Time.now.localtime
     data[:host] ||= `hostname`.chop

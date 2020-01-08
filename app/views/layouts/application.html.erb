@@ -8,7 +8,10 @@
 </head>
 <body>
 
-<%= yield %>
+  <script src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">google.load("visualization", "1", { packages: ["corechart"] });</script>
+
+  <%= yield %>
 
 </body>
 </html>

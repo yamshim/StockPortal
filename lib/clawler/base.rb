@@ -121,7 +121,7 @@ module Clawler
     def export
       @objects = get_iterated_objects
       #@objects[0..0].each do |object|
-      [2928, 3966].each do |object|
+      [4751, 3966, 3941].each do |object|
         self.each_export(object)
       end
     end

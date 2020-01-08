@@ -1,0 +1,33 @@
+<h2>Stock Price</h2><div id='target'></div>
+<script src='https://www.gstatic.com/charts/loader.js'></script>
+<script>
+  (function(){
+    'use strict';
+
+    function drawChart(){
+      var target = document.getElementById('target');
+
+      var options = {
+        title: 'Company Stock Value',
+        width: 500,
+        height: 300
+      };
+
+      var materialOptions = {
+        title: 'Average Temperatures and Daylight in Iceland Throughout the Year',
+        width: 900,
+        height: 500,
+        series: [{targetAxisIndex:0},{targetAxisIndex:1}]
+      };
+
+
+      var chart = new google.visualization.LineChart(target);
+      var data = new google.visualization.arrayToDataTable(<%== @transactions %>);
+      // var data = new google.visualization.arrayToDataTable([['a', 'b'], [2, 3]]);
+      chart.draw(data, materialOptions);
+    }
+
+    google.charts.load('current', {packages: ['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+  })();
+</script>

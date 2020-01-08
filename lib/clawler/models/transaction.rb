@@ -122,11 +122,18 @@ module Clawler
         lines = []
         transactions = ::Company.find_by_company_code(company_code).transactions.order(:date)
         transactions.each do |transaction|
-          transaction_hash = transaction.attributes
-          transaction_hash.delete('company_id')
-          transaction_hash.delete('created_at')
-          transaction_hash.delete('updated_at')
-          lines << transaction_hash.values
+          transaction_line = []
+          transaction_line << transaction.company.company_code
+          transaction_line << transaction.date
+          transaction_line << transaction.opening_price
+          transaction_line << transaction.high_price
+          transaction_line << transaction.low_price
+          transaction_line << transaction.closing_price
+          transaction_line << transaction.turnover
+          transaction_line << transaction.vwap
+          transaction_line << transaction.tick_count
+          transaction_line << transaction.trading_value
+          lines << transaction_line
         end
         dir = "#{Rails.root}/tmp/export_file"
         FileUtils.mkdir_p(dir) unless File.exists?(dir)
