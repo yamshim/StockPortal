@@ -1,30 +1,28 @@
-<h2>Stock Price</h2><div id='target'></div>
+<h2>Closing price and Pressure</h2><div id='target1'></div></br>
+<h2>Closing price and Article</h2><div id='target2'></div></br>
 <script src='https://www.gstatic.com/charts/loader.js'></script>
 <script>
   (function(){
     'use strict';
 
     function drawChart(){
-      var target = document.getElementById('target');
-
-      var options = {
-        title: 'Company Stock Value',
-        width: 500,
-        height: 300
-      };
+      var target1 = document.getElementById('target1');
+      var target2 = document.getElementById('target2');
 
       var materialOptions = {
-        title: 'Average Temperatures and Daylight in Iceland Throughout the Year',
+        title: 'Closing price and Pressure',
         width: 900,
         height: 500,
         series: [{targetAxisIndex:0},{targetAxisIndex:1}]
       };
 
+      var chart1 = new google.visualization.LineChart(target1);
+      var data1 = new google.visualization.arrayToDataTable(<%== @pressure_lines %>);
+      chart1.draw(data1, materialOptions);
 
-      var chart = new google.visualization.LineChart(target);
-      var data = new google.visualization.arrayToDataTable(<%== @transactions %>);
-      // var data = new google.visualization.arrayToDataTable([['a', 'b'], [2, 3]]);
-      chart.draw(data, materialOptions);
+      var chart2 = new google.visualization.LineChart(target2);
+      var data2 = new google.visualization.arrayToDataTable(<%== @article_lines %>);
+      chart2.draw(data2, materialOptions);
     }
 
     google.charts.load('current', {packages: ['corechart']});
