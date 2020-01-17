@@ -3,8 +3,10 @@ worker_processes Integer(ENV["WEB_CONCURRENCY"] || 3)
 timeout 15
 preload_app true  # 更新時ダウンタイム無し
 
-listen "/var/run/unicorn.sock", :backlog => 64
-pid "/var/run/unicorn.pid"
+# listen "/var/run/unicorn.sock", :backlog => 64
+# pid "/var/run/unicorn.pid"
+listen "#{Rails.root}/tmp/sockets/unicorn.sock", :backlog => 64
+pid "#{Rails.root}/tmp/pids/unicorn.pid"
 
 before_fork do |server, worker|
   Signal.trap 'TERM' do
