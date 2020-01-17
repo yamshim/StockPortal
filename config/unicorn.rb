@@ -4,7 +4,7 @@ timeout 15
 preload_app true  # 更新時ダウンタイム無し
 
 listen "/var/run/unicorn.sock"
-pid "/var/run/uincorn.pid"
+pid "/var/run/unicorn.pid"
 
 before_fork do |server, worker|
   Signal.trap 'TERM' do
