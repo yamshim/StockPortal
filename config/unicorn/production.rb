@@ -5,8 +5,8 @@ preload_app true  # 更新時ダウンタイム無し
 
 # listen "/var/run/unicorn.sock", :backlog => 64
 # pid "/var/run/unicorn.pid"
-listen "#{Rails.root}/tmp/sockets/unicorn.sock", :backlog => 64
-pid "#{Rails.root}/tmp/pids/unicorn.pid"
+listen File.expand_path('/tmp/sockets/unicorn.sock', ENV['RAILS_ROOT']), :backlog => 64
+pid File.expand_path('/tmp/pids/unicorn.pid', ENV['RAILS_ROOT'])
 
 before_fork do |server, worker|
   Signal.trap 'TERM' do
