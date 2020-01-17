@@ -16,7 +16,7 @@ set :rbenv_roles, :all # default value
 
 set :linked_dirs, %w{log tmp/backup tmp/pids tmp/cache tmp/sockets vendor/bundle public/images db/seeds/csv}
 # set :unicorn_pid, "#{shared_path}/tmp/pids/unicorn.pid"
-set unicorn_pid, "/var/run/unicorn.pid"
+set :unicorn_pid, "/var/run/unicorn.pid"
 set :bundle_jobs, 4
 
 set :whenever_identifier, ->{ "#{fetch(:application)}_#{fetch(:stage)}" }
