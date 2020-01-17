@@ -32,7 +32,7 @@ namespace :unicorn do
 
   def unicorn_pid
     begin
-      File.read("#{Rails.root.join('tmp', 'pids', 'unicorn.pid')}").to_i
+      File.read("/var/run/unicorn.pid").to_i
     rescue Errno::ENOENT
       raise "Unicorn doesn't seem to be running"
     end
