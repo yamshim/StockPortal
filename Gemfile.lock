@@ -1,5 +1,5 @@
 GIT
-  remote: git://github.com/mono0x/extractcontent.git
+  remote: https://github.com/mono0x/extractcontent.git
   revision: 6dc303ab5ad90ada73a8b63c29dc0b99591afabd
   specs:
     extractcontent (0.0.1)
@@ -204,7 +204,7 @@ GEM
     websocket (1.2.8)
     whenever (0.10.0)
       chronic (>= 0.6.3)
-    yajl-ruby (1.4.1)
+    yajl-ruby (1.4.3)
 
 PLATFORMS
   ruby
